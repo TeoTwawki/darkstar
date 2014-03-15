@@ -1718,3 +1718,16 @@ ACTION_MOBABILITY_START			= 33;
 ACTION_MOBABILITY_USING			= 34;
 ACTION_MOBABILITY_INTERRUPT		= 35;
 ACTION_LEAVE					= 36;
+
+--------------------------------------------
+--
+--	TIME OFFSETS
+--
+--------------------------------------------
+TIME_OFFSET_DEC                 = 1009810800; -- Offset from December 31 2001
+TIME_OFFSET_YEAR                = 31536000;
+TIME_OFFSET_MONTH               = 2419200;
+TIME_OFFSET_WEEK                = 604800;
+TIME_OFFSET_DAY                 = 86400;
+TIME_OFFSET_HOUR                = 3600;
+TIME_OFFSET_MINUTE              = 60;

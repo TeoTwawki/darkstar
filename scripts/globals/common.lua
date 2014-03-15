@@ -93,3 +93,16 @@ end;
 function vanaDay()
    return (VanadielYear() * 360) + VanadielDayOfTheYear();
 end;
+
+-----------------------------------
+-- getTimeOffset
+-- Returns time offset from date
+-----------------------------------
+function getTimeOffset(unixtimestamp)
+
+    local t = os.time(os.date('!*t'));
+    
+    t = t - unixtimestamp;
+    
+    return t;
+end
