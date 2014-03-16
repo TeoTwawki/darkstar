@@ -68,18 +68,17 @@ end;
 -----------------------------------
 
 function onEventUpdate(player,csid,option)
-printf("CSID: %u",csid);
-printf("RESULT: %u",option);
+--printf("CSID: %u",csid);
+--printf("RESULT: %u",option);
     
     --[[ Create an array for the progress checks, not used anywhere else - lets keep it local ]]--
-    local vars = {"[ENM]Holla", "[ENM]Dem", "[ENM]Mea", "[ENM]Vahzl", "[ENM]MonarchLinn", "[ENM]ShroudedMaw", "[ENM]MineShaft", "[ENM]BoneyardGully"}
+    local vars = {"[ENM]Holla", "[ENM]Dem", "[ENM]Mea", "[ENM]Vahzl", "[ENM]MonarchLinn", "[ENM]ShroudedMaw", "[ENM]MineShaft", "[ENM]Bearclaw", "[ENM]BoneyardGully"}
     
     if(option > 0 and option < 255) then
     
     local prog = player:getVar(vars[option]);
     local waitTime = prog - getTimeOffset(TIME_OFFSET_DEC);
     
-        print(prog);
         --[[ waitTime > 0 means theres still wait time, display the date to wait until ]]--
         if(waitTime > 0) then
             player:updateEvent(0,prog);

@@ -99,10 +99,5 @@ end;
 -- Returns time offset from date
 -----------------------------------
 function getTimeOffset(unixtimestamp)
-
-    local t = os.time(os.date('!*t'));
-    
-    t = t - unixtimestamp;
-    
-    return t;
+    return os.time(os.date('!*t')) - unixtimestamp;
 end

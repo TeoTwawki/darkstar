@@ -79,8 +79,8 @@ end;
 -----------------------------------
 
 function onEventUpdate(player,csid,option)
-printf("CSID: %u",csid);
-printf("RESULT: %u",option);
+--printf("CSID: %u",csid);
+--printf("RESULT: %u",option);
 
     --[[ Create an array for the keyitems ]]--
     censer = {CENSER_OF_ABANDONMENT, CENSER_OF_ANTIPATHY, CENSER_OF_ANIUMUS, CENSER_OF_ACRIMONY}
@@ -104,7 +104,6 @@ printf("RESULT: %u",option);
             player:updateEvent(0,0,0,0,0,0);
             --[[ waitTime < 0 means player has waited 5 days, clear the var ]]--
             player:setVar(vars[option], 0);
-            print(prog);
         end
         
     end
@@ -116,8 +115,8 @@ end;
 -----------------------------------
 
 function onEventFinish(player,csid,option)
-printf("CSID: %u",csid);
-printf("RESULT: %u",option);
+--printf("CSID: %u",csid);
+--printf("RESULT: %u",option);
 
     if(csid == 0x2750) then
         if(option > 0 and option < 255) then
