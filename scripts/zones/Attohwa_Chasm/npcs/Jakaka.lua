@@ -26,8 +26,6 @@ function onTrade(player,npc,trade)
     if(trade:hasItemQty(1778,1) and trade:getItemCount() == 1) then
         if(player:hasKeyItem(MIASMA_FILTER) == false and waitTime <= 0) then
             player:startEvent(0x000c)
-        else
-            player:startEvent(0x000e);
         end
     end
     

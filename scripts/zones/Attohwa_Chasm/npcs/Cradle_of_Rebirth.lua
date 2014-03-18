@@ -14,6 +14,11 @@ require("scripts/globals/keyitems");
 -----------------------------------
 
 function onTrade(player,npc,trade)
+    if(trade:hasItemQty(1777,1) and trade:getItemCount() == 1) then
+        player:tradeComplete();
+        player:addItem(1778,1);
+        player:messageSpecial(ITEM_OBTAINED, 1778);
+    end
 	
 end;
 

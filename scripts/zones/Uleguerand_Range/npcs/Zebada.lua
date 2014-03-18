@@ -30,9 +30,6 @@ function onTrade(player,npc,trade)
         if(player:hasKeyItem(ZEPHYR_FAN) == false and waitTime <= 0) then
             --[[ Award KeyItem ]]--
             player:startEvent(0x000d);
-        else
-            --[[ Display time to wait until ]]--
-            player:startEvent(0x000F, prog);
         end
     end
 end;
