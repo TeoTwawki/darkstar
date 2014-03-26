@@ -33,22 +33,24 @@ function onTrade(player,npc,trade)
     if(trade:getGil() > 0 and trade:getItemCount() == 1) then
     
         local gil = trade:getGil();
-        local maxVal = (gil/1000*5);
+        local maxVal = (gil/200);
+
+        --[[ Highest number caps at 50 (10,000 gil) ]]--
+        if maxVal > 50 then maxVal = 50 end
         
         if(player:hasKeyItem(SHAFT_GATE_OPERATING_DIAL) == false) then
-                if(gil == 2000) then
-                    player:startEvent(0x0037, gil, 10, roll, teleFee);
-                elseif(gil == 2716) then
-                    player:startEvent(0x0037, gil, 13, roll, teleFee);
-                elseif(gil ~= 2716 and gil > 2000) then
-                    if (maxVal > 50) then maxVal = 50; end;
-                    player:startEvent(0x0037, gil, maxVal, roll, teleFee);
-                end
-                
+            if(gil == 2716) then
+                player:startEvent(0x0037, gil, maxVal - 1, roll, teleFee);
+            else
+                player:startEvent(0x0037, gil, maxVal, roll, teleFee);  
+            end          
+            
         --[[ Player has the keyitem necessary for teleporting and can be teleported if 2,000 gil is traded ]]--
         elseif(player:hasKeyItem(SHAFT_GATE_OPERATING_DIAL) == true and gil == teleFee) then
             player:startEvent(0x0038);
+            
         end
+        
     --[[ Player is trading a Sylvan Stone for Mine Shaft #2716 Lever ]]--
     elseif(trade:hasItemQty(1781,1) and trade:getItemCount() == 1) then
         --[[ Check if player has to wait before initiating the keyitem reward cs ]]--
@@ -58,6 +60,7 @@ function onTrade(player,npc,trade)
     else
         player:startEvent(0x0032);
     end
+    
     
 end;
 

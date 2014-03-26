@@ -4052,11 +4052,15 @@ inline int32 CLuaBaseEntity::getPartyMember(lua_State* L)
     DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
     DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
 
-    DSP_DEBUG_BREAK_IF(lua_isnil(L,-1) || !lua_isnumber(L,-1));
-    DSP_DEBUG_BREAK_IF(lua_isnil(L,-2) || !lua_isnumber(L,-2));
+    DSP_DEBUG_BREAK_IF(lua_isnil(L,1) || !lua_isnumber(L,1));
+    DSP_DEBUG_BREAK_IF(lua_isnil(L,2) || !lua_isnumber(L,2));
 
-	uint8 member        = (uint8)lua_tonumber(L,-1);
-	uint8 allianceparty = (uint8)lua_tonumber(L,-2);
+	uint8 member        = (uint8)lua_tonumber(L,1);
+	uint8 allianceparty = (uint8)lua_tonumber(L,2);
+    bool silent = false;
+    
+    if(!lua_isnil(L,3) && lua_isboolean(L,3))
+        silent = lua_toboolean(L,3);
 
 	CBattleEntity* PTargetChar = NULL;
 
@@ -4074,13 +4078,16 @@ inline int32 CLuaBaseEntity::getPartyMember(lua_State* L)
 	{
         lua_getglobal(L, CLuaBaseEntity::className);
 		lua_pushstring(L,"new");
-		lua_gettable(L,-2);
-		lua_insert(L,-2);
+		lua_gettable(L,2);
+		lua_insert(L,2);
 		lua_pushlightuserdata(L,(void*)PTargetChar);
 		lua_pcall(L,2,1,0);
 		return 1;
 	}
-    ShowError(CL_RED"Lua::getPartyMember :: Member or Alliance Number is not valid.\n" CL_RESET);
+    
+    if(!silent)
+        ShowError(CL_RED"Lua::getPartyMember :: Member or Alliance Number is not valid.\n" CL_RESET);
+    
 	lua_pushnil(L);
 	return 1;
 }
