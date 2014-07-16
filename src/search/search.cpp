@@ -21,6 +21,8 @@
 ===========================================================================
 */
 
+#include <thread>
+
 #include "../common/cbasetypes.h"
 #include "../common/blowfish.h"
 #include "../common/malloc.h"
@@ -40,7 +42,6 @@
 	#include <netdb.h>
 	#include <netinet/in.h>
 	#include <errno.h>
-        #include <pthread.h>
 	typedef u_int SOCKET;
 	#define INVALID_SOCKET  (SOCKET)(~0)
 	#define SOCKET_ERROR            (-1)
@@ -75,12 +76,9 @@ struct SearchCommInfo
 };
 
 const int8* SEARCH_CONF_FILENAME = "./conf/search_server.conf";
+const int8* LOGIN_CONF_FILENAME = "./conf/login_darkstar.conf";
 
-#ifdef WIN32
-ppuint32 __stdcall TCPComm(void* lpParam);
-#else
-void * TCPComm(void* lpParam);
-#endif
+void TCPComm(SOCKET socket);
 
 extern void HandleSearchRequest(CTCPRequestPacket* PTCPRequest);
 extern void HandleSearchComment(CTCPRequestPacket* PTCPRequest);
@@ -91,9 +89,13 @@ extern search_req _HandleSearchRequest(CTCPRequestPacket* PTCPRequest, SOCKET so
 extern std::string toStr(int number);
 
 search_config_t search_config;
+login_config_t login_config;
 
 void search_config_default();
 void search_config_read(const int8* file);
+
+void login_config_default();
+void login_config_read(const int8* file);		// We only need the search server port defined here
 
 /************************************************************************
 *																		*
@@ -151,17 +153,7 @@ int32 main (int32 argc, int8 **argv)
 
     search_config_default();
     search_config_read(SEARCH_CONF_FILENAME);
-#ifndef WIN32
-    pthread_t thread1;
-    pthread_attr_t threadAttr;
-    int ptherr;
-
-    ptherr = 0;
-    ptherr = pthread_attr_init(&threadAttr);
-    if (ptherr != 0)
-        errno = ptherr;
-        perror("pthread_attr_init");
-#endif
+	login_config_read(LOGIN_CONF_FILENAME);
 
 #ifdef WIN32
     // Initialize Winsock
@@ -183,7 +175,7 @@ int32 main (int32 argc, int8 **argv)
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the server address and port
-    iResult = getaddrinfo(NULL, "54002", &hints, &result);
+    iResult = getaddrinfo(NULL, login_config.search_server_port, &hints, &result);
     if (iResult != 0)
 	{
         ShowError("getaddrinfo failed with error: %d\n", iResult);
@@ -258,22 +250,8 @@ int32 main (int32 argc, int8 **argv)
 #endif
 			continue;
 		}
-		SearchCommInfo CommInfo;
 
-		CommInfo.socket = ClientSocket;
-		CommInfo.ip = 0;
-		CommInfo.port = 0;
-
-#ifdef WIN32
-		CreateThread(0,0,TCPComm,&CommInfo,0,0);
-#else
-		ptherr = 0;
-		ptherr = pthread_create(&thread1,&threadAttr,&TCPComm,&CommInfo);
-		if (ptherr != 0)
-			errno = ptherr;
-			perror("pthread_attr_init");
-#endif
-
+		std::thread(TCPComm, ClientSocket).detach();
 	}
     // TODO: сейчас мы никогда сюда не попадем
 
@@ -302,11 +280,6 @@ int32 main (int32 argc, int8 **argv)
     WSACleanup();
 #else
     close(ClientSocket);
-    ptherr = 0;
-    ptherr = pthread_attr_destroy(&threadAttr);
-    if (ptherr != 0)
-        errno = ptherr;
-        perror("pthread_attr_init");
 #endif
     return 0;
 }
@@ -388,26 +361,74 @@ void search_config_read(const int8* file)
 }
 
 /************************************************************************
+*                                                                       *
+*  login_darkstar			                                            *
+*                                                                       *
+************************************************************************/
+
+void login_config_default()
+{
+	login_config.search_server_port = "54002";
+}
+
+
+/************************************************************************
+*                                                                       *
+*  login_darkstar			                                            *
+*                                                                       *
+************************************************************************/
+
+void login_config_read(const int8* file)
+{
+	int8 line[1024], w1[1024], w2[1024];
+	FILE* fp;
+
+	fp = fopen(file, "r");
+	if (fp == NULL)
+	{
+		ShowError("configuration file not found at: %s\n", file);
+		return;
+	}
+
+	while (fgets(line, sizeof(line), fp))
+	{
+		int8* ptr;
+
+		if (line[0] == '#')
+			continue;
+		if (sscanf(line, "%[^:]: %[^\t\r\n]", w1, w2) < 2)
+			continue;
+
+		//Strip trailing spaces
+		ptr = w2 + strlen(w2);
+		while (--ptr >= w2 && *ptr == ' ');
+		ptr++;
+		*ptr = '\0';
+
+		if (strcmp(w1, "search_server_port") == 0)
+		{
+			login_config.search_server_port = aStrdup(w2);
+		}
+	}
+	fclose(fp);
+}
+
+/************************************************************************
 *																		*
 *																		*
 *																		*
 ************************************************************************/
-#ifdef WIN32
-ppuint32 __stdcall TCPComm(void* lpParam)
-#else 
-void * TCPComm(void* lpParam)
-#endif
-{
-	SearchCommInfo CommInfo = *((SearchCommInfo*)lpParam);
 
+void TCPComm(SOCKET socket)
+{
 	//ShowMessage("TCP connection from client with port: %u\n", htons(CommInfo.port));
 	
-	CTCPRequestPacket* PTCPRequest = new CTCPRequestPacket(&CommInfo.socket);
+	CTCPRequestPacket* PTCPRequest = new CTCPRequestPacket(&socket);
 
 	if (PTCPRequest->ReceiveFromSocket() == 0)
 	{
 		delete PTCPRequest;
-		return 0;
+		return;
 	}
 	//PrintPacket((int8*)PTCPRequest->GetData(), PTCPRequest->GetSize());
 	ShowMessage("= = = = = = = \nType: %u Size: %u \n",PTCPRequest->GetPacketType(),PTCPRequest->GetSize());
@@ -447,11 +468,6 @@ void * TCPComm(void* lpParam)
 		break;
 	}
 	delete PTCPRequest;
-#ifdef WIN32
-	return 1;
-#else
-	return NULL;
-#endif
 }
 
 /************************************************************************

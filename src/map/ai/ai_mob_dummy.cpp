@@ -47,7 +47,7 @@
 
 #include "../packets/action.h"
 #include "../packets/entity_update.h"
-#include "../packets/fade_out.h"
+#include "../packets/entity_animation.h"
 #include "../packets/message_basic.h"
 
 
@@ -71,7 +71,6 @@ CAIMobDummy::CAIMobDummy(CMobEntity* PMob)
 	m_firstSpell = true;
 	m_LastSpecialTime = 0;
 	m_skillTP = 0;
-	m_ChaseThrottle = 0;
 	m_LastStandbackTime = 0;
 	m_DeaggroTime = 0;
 	m_NeutralTime = 0;
@@ -92,6 +91,8 @@ void CAIMobDummy::CheckCurrentAction(uint32 tick)
 	m_Tick = tick;
 
 	m_PMob->PEnmityContainer->DecayEnmity();
+
+	OnTick();
 
 	switch(m_ActionType)
 	{
@@ -138,7 +139,7 @@ void CAIMobDummy::ActionRoaming()
 	else if (m_PMob->m_OwnerID.id != 0 && !(m_PMob->m_roamFlags & ROAMFLAG_IGNORE))
 	{
 		// i'm claimed by someone and need hate towards this person
-        m_PBattleTarget = (CBattleEntity*)m_PMob->loc.zone->GetEntity(m_PMob->m_OwnerID.targid, TYPE_PC | TYPE_MOB | TYPE_PET);
+        m_PBattleTarget = (CBattleEntity*)m_PMob->GetEntity(m_PMob->m_OwnerID.targid, TYPE_PC | TYPE_MOB | TYPE_PET);
 
 		battleutils::ClaimMob(m_PMob, m_PBattleTarget);
 
@@ -157,9 +158,11 @@ void CAIMobDummy::ActionRoaming()
 
 	// wait my time
 	if(m_Tick < m_LastWaitTime + m_WaitTime){
-		m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_NAME));
+		m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_NONE));
 		return;
 	}
+
+    uint8 updates = 0;
 
 	if(m_PMob->m_roamFlags & ROAMFLAG_IGNORE)
 	{
@@ -174,20 +177,26 @@ void CAIMobDummy::ActionRoaming()
 	{
 		FollowPath();
 
-		m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_POS));
-
+        updates |= UPDATE_POS;
 	}
     else if (m_Tick >= m_LastActionTime + m_PMob->getBigMobMod(MOBMOD_ROAM_COOL))
 	{
 		// lets buff up or move around
 
-		// recover health
-		// can't rest when taking hp damage
-		if(!m_PMob->getMod(MOD_REGEN_DOWN) && !m_PMob->StatusEffectContainer->HasStatusEffectByFlag(EFFECTFLAG_NO_REST) && !m_PMob->Rest(0.1f))
-		{
-			// undirty exp
-			m_PMob->m_giveExp = true;
-		}
+                // can't rest with poison or disease
+            if(m_PMob->CanRest()){
+                // recover 10% health
+                if(m_PMob->Rest(0.1f))
+                {
+                    // health updated
+                    updates |= UPDATE_HP;
+                }
+                else
+                {
+                    // at max health undirty exp
+                    m_PMob->m_giveExp = true;
+                }
+            }
 
 		// if I just disengaged check if I should despawn
 		if(m_checkDespawn && m_PMob->IsFarFromHome())
@@ -202,7 +211,7 @@ void CAIMobDummy::ActionRoaming()
 
 				FollowPath();
 
-				m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_POS));
+                updates |= UPDATE_POS;
 
 				// move back every 5 seconds
 				m_LastActionTime = m_Tick - m_PMob->getBigMobMod(MOBMOD_ROAM_COOL) + MOB_NEUTRAL_TIME;
@@ -235,7 +244,7 @@ void CAIMobDummy::ActionRoaming()
 				m_PMob->HideModel(true);
 				m_PMob->animationsub = 0;
 
-				m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_POS));
+				updates |= UPDATE_POS;
 			}
 			else if(m_PMob->m_roamFlags & ROAMFLAG_EVENT)
 			{
@@ -243,7 +252,7 @@ void CAIMobDummy::ActionRoaming()
 				luautils::OnMobRoamAction(m_PMob);
 				m_LastActionTime = m_Tick;
 
-				m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_POS));
+                updates |= UPDATE_POS;
 			}
 			else if(m_PMob->CanRoam() && m_PPathFind->RoamAround(m_PMob->m_SpawnPoint, m_PMob->m_roamFlags))
 			{
@@ -262,8 +271,7 @@ void CAIMobDummy::ActionRoaming()
 					FollowPath();
 				}
 
-				m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_POS));
-
+				updates |= UPDATE_POS;
 			}
 			else
 			{
@@ -277,6 +285,11 @@ void CAIMobDummy::ActionRoaming()
 	if ((m_Tick - m_SpawnTime) % 3000 <= 400)
 	{
 		luautils::OnMobRoam(m_PMob);
+	}
+
+	if (updates != 0)
+	{
+		m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, updates));
 	}
 }
 
@@ -361,6 +374,7 @@ void CAIMobDummy::ActionDisengage()
 
 void CAIMobDummy::ActionFall()
 {
+	m_PMob->m_THLvl = m_PMob->PEnmityContainer->GetHighestTH();
 	m_PMob->PEnmityContainer->Clear();
 	m_PPathFind->Clear();
 
@@ -389,7 +403,7 @@ void CAIMobDummy::ActionDropItems()
 {
     if (m_Tick >= m_LastActionTime + m_PMob->m_DropItemTime)
 	{
-        CCharEntity* PChar = (CCharEntity*)m_PMob->loc.zone->GetEntity(m_PMob->m_OwnerID.targid, TYPE_PC);
+        CCharEntity* PChar = (CCharEntity*)m_PMob->GetEntity(m_PMob->m_OwnerID.targid, TYPE_PC);
 
         if (PChar != NULL && PChar->id == m_PMob->m_OwnerID.id)
 		{
@@ -407,18 +421,19 @@ void CAIMobDummy::ActionDropItems()
 				}
 
                 DropList_t* DropList = itemutils::GetDropList(m_PMob->m_DropID);
+                //ShowDebug(CL_CYAN"DropID: %u dropping with TH Level: %u\n" CL_RESET, m_PMob->m_DropID, m_PMob->m_THLvl);
 
 			    if (DropList != NULL && DropList->size())
 			    {
-					uint8 highestTH = charutils::GetHighestTreasureHunter(PChar, m_PMob);
-
                     for(uint8 i = 0; i < DropList->size(); ++i)
 				    {
-						//highestTH is the number of 'extra chances' at an item. If the item is obtained, then break out.
+						//THLvl is the number of 'extra chances' at an item. If the item is obtained, then break out.
 						uint8 tries = 0;
-						while(tries < 1+highestTH)
+						uint8 maxTries = 1 + (m_PMob->m_THLvl > 2 ? 2 : m_PMob->m_THLvl);
+						uint8 bonus = (m_PMob->m_THLvl > 2 ? (m_PMob->m_THLvl - 2)*10 : 0);
+						while(tries < maxTries)
 						{
-							if(WELL512::irand()%1000 < DropList->at(i).DropRate)
+							if(WELL512::irand()%1000 < DropList->at(i).DropRate + bonus)
 							{
 								PChar->PTreasurePool->AddItem(DropList->at(i).ItemID, m_PMob);
 								break;
@@ -442,18 +457,20 @@ void CAIMobDummy::ActionDropItems()
 				*/
 
 				uint8 Pzone = PChar->getZone();
+
 				bool validZone = ((Pzone > 0 && Pzone < 39) || (Pzone > 42 && Pzone < 134) || (Pzone > 135 && Pzone < 185) || (Pzone > 188 && Pzone < 255));
 
-				if(validZone && charutils::GetRealExp(PChar->GetMLevel(),m_PMob->GetMLevel())>0 && m_PMob->m_Type == MOBTYPE_NORMAL){ //exp-yielding monster and drop is successful
-					//TODO: The drop is actually based on a 5 minute timer, and not a probability of dropping!
+                if(validZone && charutils::GetRealExp(PChar->GetMLevel(),m_PMob->GetMLevel()) > 0)
+                {
 
 					if (PChar->StatusEffectContainer->HasStatusEffect(EFFECT_SIGNET) && m_PMob->m_Element > 0 && WELL512::irand()%100 < 20) // Need to move to SIGNET_CHANCE constant
 					{
 						PChar->PTreasurePool->AddItem(4095 + m_PMob->m_Element, m_PMob);
+						
 					}
-					if(WELL512::irand()%100 < 20)
-					{
 
+					if (WELL512::irand() % 100 < 20 && PChar->PTreasurePool->CanAddSeal())
+					{
 						//RULES: Only 1 kind may drop per mob
 						if(m_PMob->GetMLevel() < 50){ //b.seal only
 							PChar->PTreasurePool->AddItem(1126, m_PMob);
@@ -501,10 +518,15 @@ void CAIMobDummy::ActionDropItems()
 			}
 
 			PChar->setWeaponSkillKill(false);
+			m_PMob->StatusEffectContainer->KillAllStatusEffect();
 
 			// NOTE: this is called for all alliance / party members!
 			luautils::OnMobDeath(m_PMob, PChar);
 
+		}
+		else
+		{
+			luautils::OnMobDeath(m_PMob, NULL);
 		}
         m_ActionType = ACTION_DEATH;
 	}
@@ -518,16 +540,11 @@ void CAIMobDummy::ActionDropItems()
 
 void CAIMobDummy::ActionDeath()
 {
-	if (m_Tick > m_LastActionTime + 12000)
+	if (m_Tick > m_LastActionTime + 12000 && !(m_PMob->m_Behaviour & BEHAVIOUR_NO_DESPAWN))
 	{
-        m_PMob->StatusEffectContainer->KillAllStatusEffect();
-
 		m_ActionType = ACTION_FADE_OUT;
-		m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CFadeOutPacket(m_PMob));
-				
-		//if (m_PMob->animationsub == 2) m_PMob->animationsub = 1;
+		m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityAnimationPacket(m_PMob, CEntityAnimationPacket::FADE_OUT));
 	}
-
 }
 
 /************************************************************************
@@ -599,10 +616,9 @@ void CAIMobDummy::ActionSpawn()
 		m_PMob->m_CallForHelp = 0;
 		m_PMob->m_HiPCLvl = 0;
 		m_PMob->m_THLvl = 0;
-		m_PMob->m_THPCID = 0;
 		m_PMob->m_ItemStolen = false;
         m_PMob->m_DropItemTime = 1000;
-		m_PMob->status = STATUS_UPDATE;
+		m_PMob->status = m_PMob->allegiance == ALLEGIANCE_MOB ? STATUS_UPDATE : STATUS_NORMAL;
 		m_PMob->animation = ANIMATION_NONE;
 		m_PMob->HideName(false);
         m_PMob->m_extraVar = 0;
@@ -655,7 +671,7 @@ void CAIMobDummy::ActionSpawn()
 		{
 			for(int8 i=1; i<m_PMob->getMobMod(MOBMOD_ASSIST)+1; i++)
 			{
-				CMobEntity* PMob = (CMobEntity*)m_PMob->loc.zone->GetEntity(m_PMob->targid + i, TYPE_MOB);
+				CMobEntity* PMob = (CMobEntity*)m_PMob->GetEntity(m_PMob->targid + i, TYPE_MOB);
 
 				if(PMob != NULL)
 				{
@@ -796,15 +812,34 @@ void CAIMobDummy::ActionAbilityStart()
 	// remove tp
 	if(m_PMob->StatusEffectContainer->HasStatusEffect(EFFECT_MEIKYO_SHISUI))
 	{
-		if(m_PMob->health.tp <= 100)
+		if(m_PMob->health.tp <= 1000)
 		{
 			m_PMob->health.tp = 0;
 		} else {
-			m_PMob->health.tp -= 100;
+			m_PMob->health.tp -= 1000;
 		}
 	} else {
 		m_PMob->health.tp = 0;
 	}
+
+    if (m_PMobSkill->getFlag() & SKILLFLAG_DRAW_IN)
+    {
+        float currentDistance = distance(m_PMob->loc.p, m_PBattleTarget->loc.p);
+
+        if (currentDistance >= m_PMob->m_ModelSize * 2)
+        {
+            if (!m_drawnIn)
+            {
+                battleutils::DrawIn(m_PBattleTarget, m_PMob, m_PMob->m_ModelSize - 0.2f);
+                m_drawnIn = true;
+            }
+            else
+            {
+                m_drawnIn = false;
+            }
+
+        }
+    }
 
 	m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_COMBAT));
 
@@ -963,13 +998,14 @@ void CAIMobDummy::ActionAbilityFinish()
 		if(m_PMobSkill->hasMissMsg())
 		{
 		    Action.reaction   = REACTION_MISS;
+            Action.speceffect = SPECEFFECT_NONE;
             if (msg = m_PMobSkill->getAoEMsg())
                 msg = 282;
 		} else {
 		    Action.reaction   = REACTION_HIT;
 		}
 
-        if (Action.speceffect & SPECEFFECT_HIT && Action.param > 0)
+        if (Action.speceffect & SPECEFFECT_HIT)
         {
             Action.speceffect = SPECEFFECT_RECOIL;
             Action.knockback = m_PMobSkill->getKnockback();
@@ -1011,11 +1047,7 @@ void CAIMobDummy::ActionAbilityFinish()
 	else
 	{
 		// increase magic / ranged timer so its not used right after
-		m_LastMagicTime = m_Tick + m_PMobSkill->getAnimationTime();
-		m_LastSpecialTime = m_Tick + m_PMobSkill->getAnimationTime();
-        m_LastActionTime = m_Tick + m_PMobSkill->getAnimationTime();
-
-        m_ActionType = ACTION_ATTACK;
+		Stun(m_PMobSkill->getAnimationTime());
 
         if (m_PMobSkill->getActivationTime() == 0 && m_PMobSkill->getAnimationTime() < 1000)
         {
@@ -1096,8 +1128,11 @@ void CAIMobDummy::ActionStun()
 
 	if(m_PBattleSubTarget != NULL)
 	{
-	    // always face target
-	    m_PPathFind->LookAt(m_PBattleSubTarget->loc.p);
+	    // face the target
+		if (!(m_PMob->m_Behaviour & BEHAVIOUR_NO_TURN))
+		{
+			m_PPathFind->LookAt(m_PBattleSubTarget->loc.p);
+		}	
 	}
 
 	m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_COMBAT));
@@ -1171,12 +1206,12 @@ void CAIMobDummy::ActionMagicFinish()
 
 	m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CEntityUpdatePacket(m_PMob, ENTITY_UPDATE, UPDATE_COMBAT));
 
+	// display animation, then continue fighting
+	Stun(m_PSpell->getAnimationTime());
+
 	// this shouldn't have to exist all the way through
 	m_PSpell = NULL;
 	m_PBattleSubTarget = NULL;
-
-	// display animation, then continue fighting
-	Stun(1000);
 }
 
 void CAIMobDummy::ActionMagicInterrupt()
@@ -1314,6 +1349,13 @@ void CAIMobDummy::ActionAttack()
 		return;
 	}
 
+	if (m_PPathFind->IsFollowingScriptedPath())
+	{
+		m_PPathFind->FollowPath();
+		FinishAttack();
+		return;
+	}
+
     // attempt to teleport
     if (m_PMob->getMobMod(MOBMOD_TELEPORT_TYPE) == 1)
     {
@@ -1332,7 +1374,12 @@ void CAIMobDummy::ActionAttack()
         }
     }
     // try to standback if I can
-    if (m_PMob->getBigMobMod(MOBMOD_STANDBACK_TIME) && m_PMob->getMobMod(MOBMOD_TELEPORT_TYPE) != 2)
+	if (m_PMob->m_Behaviour & BEHAVIOUR_STANDBACK)
+	{
+		FinishAttack();
+		return;
+	}
+    else if (m_PMob->getBigMobMod(MOBMOD_STANDBACK_TIME) && m_PMob->getMobMod(MOBMOD_TELEPORT_TYPE) != 2)
 	{
 		if(currentDistance > 28)
 		{
@@ -1374,7 +1421,7 @@ void CAIMobDummy::ActionAttack()
 		}
 	}
 
-    bool move = false;
+    bool move = m_PPathFind->IsFollowingPath();
 
     //If using mobskills instead of attacks, calculate distance to move and ability to use here
     if (m_mobskillattack)
@@ -1406,7 +1453,7 @@ void CAIMobDummy::ActionAttack()
             }
             float currentDistance = distance(m_PMob->loc.p, m_PBattleSubTarget->loc.p);
             if (currentDistance <= m_PMobSkill->getDistance()) {
-                int16 WeaponDelay = m_PMob->GetWeaponDelay(false);
+                int16 WeaponDelay = m_PMob->GetWeaponDelay(true);
                 if (m_AutoAttackEnabled && m_Tick > m_LastActionTime + WeaponDelay)
                 {
                     m_LastActionTime = m_Tick;
@@ -1424,35 +1471,27 @@ void CAIMobDummy::ActionAttack()
 
     if (m_PMob->getMobMod(MOBMOD_SHARE_POS) > 0)
     {
-        CMobEntity* posShare = (CMobEntity*)m_PMob->loc.zone->GetEntity(m_PMob->getMobMod(MOBMOD_SHARE_POS), TYPE_MOB);
+        CMobEntity* posShare = (CMobEntity*)m_PMob->GetEntity(m_PMob->getMobMod(MOBMOD_SHARE_POS), TYPE_MOB);
         m_PMob->loc = posShare->loc;
     }
+
     else if(currentDistance > m_PMob->m_ModelSize || move)
-	{
-		if(m_PMob->getMobMod(MOBMOD_DRAW_IN) && distance(m_PMob->m_SpawnPoint, m_PBattleTarget->loc.p) > m_PMob->getMobMod(MOBMOD_DRAW_IN))
-		{
-			// prevent double drawin
-			// I think it happens because the server moves the char
-			// then the char gets updated from the client in the old position
-			// this causing draw in to happen twice unless this if is here
-			if(!m_drawnIn)
-			{
-				battleutils::DrawIn(m_PBattleTarget, &m_PMob->loc.p, m_PMob->m_ModelSize - 0.2f);
+    {
+        if (m_PMob->getMobMod(MOBMOD_DRAW_IN) > 0)
+        {
+            if (!m_drawnIn)
+            {
+                if (currentDistance >= m_PMob->m_ModelSize * 2)
+                    battleutils::DrawIn(m_PBattleTarget, m_PMob, m_PMob->m_ModelSize - 0.2f);
 
-				luautils::OnMobDrawIn(m_PMob, m_PBattleTarget);
-
-				m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CMessageBasicPacket(m_PBattleTarget,m_PBattleTarget,0,0, 232));
-
-			    currentDistance = distance(m_PMob->loc.p, m_PBattleTarget->loc.p);
-
-			    m_drawnIn = true;
-			}
-			else
-			{
-				m_drawnIn = false;
-			}
-		}
-        else if (m_PMob->speed != 0 && m_Tick >= m_LastSpecialTime)
+                m_drawnIn = true;
+            }
+            else
+            {
+                m_drawnIn = false;
+            }
+        }
+        if (m_PMob->speed != 0 && m_Tick >= m_LastSpecialTime)
 		{
             // attempt to teleport to target (if in range)
             if (m_PMob->getMobMod(MOBMOD_TELEPORT_TYPE) == 2)
@@ -1468,22 +1507,13 @@ void CAIMobDummy::ActionAttack()
                     return;
                 }
             }
-			// mobs will find a new path only when enough ticks pass
-			// this is so the server is not overloaded
-			if(!m_PPathFind->IsFollowingPath() || ++m_ChaseThrottle == 4)
-			{
-				m_ChaseThrottle = 0;
-				m_PPathFind->PathAround(m_PBattleTarget->loc.p, 2.0f, PATHFLAG_WALLHACK | PATHFLAG_RUN);
-			}
 
-			if(m_PPathFind->IsFollowingPath())
-			{
-				// m_PPathFind->CurvePath(0.5f);
-				m_PPathFind->FollowPath();
+			m_PPathFind->PathAround(m_PBattleTarget->loc.p, 2.0f, PATHFLAG_WALLHACK | PATHFLAG_RUN);
+			// m_PPathFind->CurvePath(0.5f);
+			m_PPathFind->FollowPath();
 
-				// recalculate
-			    currentDistance = distance(m_PMob->loc.p, m_PBattleTarget->loc.p);
-			}
+			// recalculate
+			currentDistance = distance(m_PMob->loc.p, m_PBattleTarget->loc.p);
 		}
 	}
 
@@ -1495,7 +1525,7 @@ void CAIMobDummy::ActionAttack()
 
 		if (m_AutoAttackEnabled && m_Tick > m_LastActionTime + WeaponDelay)
 		{
-			if (battleutils::IsParalised(m_PMob))
+			if (battleutils::IsParalyzed(m_PMob))
 			{
 				m_PMob->loc.zone->PushPacket(m_PMob, CHAR_INRANGE, new CMessageBasicPacket(m_PMob,m_PBattleTarget,0,0, MSGBASIC_IS_PARALYZED));
 			}
@@ -1546,6 +1576,9 @@ void CAIMobDummy::ActionAttack()
 							Action.messageID = 70;
 							Action.reaction   = REACTION_PARRY;
 							Action.speceffect = SPECEFFECT_NONE;
+
+							battleutils::HandleTacticalParry(m_PBattleTarget);
+							battleutils::HandleIssekiganEnmityBonus(m_PBattleTarget, m_PMob);
 						}
 						else if (battleutils::IsAbsorbByShadow(m_PBattleTarget))
 						{
@@ -1574,8 +1607,8 @@ void CAIMobDummy::ActionAttack()
 							//counter check (rate AND your hit rate makes it land, else its just a regular hit)
 							if (WELL512::irand()%100 < (m_PBattleTarget->getMod(MOD_COUNTER) + meritCounter) &&
 								WELL512::irand()%100 < battleutils::GetHitRate(m_PBattleTarget,m_PMob) &&
-								(charutils::hasTrait((CCharEntity*)m_PBattleTarget,TRAIT_COUNTER) ||
-								m_PBattleTarget->StatusEffectContainer->HasStatusEffect(EFFECT_SEIGAN)))
+								(m_PBattleTarget->objtype != TYPE_PC || (charutils::hasTrait((CCharEntity*)m_PBattleTarget,TRAIT_COUNTER) ||
+								m_PBattleTarget->StatusEffectContainer->HasStatusEffect(EFFECT_SEIGAN))))
 							{
 								isCountered = true;
 								Action.messageID = 33; //counter msg  32
@@ -1742,12 +1775,6 @@ void CAIMobDummy::ActionAttack()
 
 void CAIMobDummy::FinishAttack()
 {
-	// launch OnMobFight every 3 sec (not everytime at 0 but 0~400).
-	if((m_Tick - m_StartBattle) % 3000 <= 400)
-	{
-		luautils::OnMobFight(m_PMob,m_PBattleTarget);
-	}
-
 	if(m_PMob->getMobMod(MOBMOD_RAGE) && !m_PMob->hasRageMode() && m_Tick >= m_StartBattle + m_PMob->getBigMobMod(MOBMOD_RAGE))
 	{
 		// come at me bro
@@ -1764,13 +1791,6 @@ bool CAIMobDummy::TryDeaggro()
 		return true;
 	}
 
-	// mob should not attack another mob with no master
-	if(m_PBattleTarget != NULL && (m_PBattleTarget->objtype == TYPE_MOB || m_PBattleTarget->objtype == TYPE_PET) && m_PBattleTarget->PMaster == NULL)
-	{
-		return true;
-	}
-
-
 	// target is dead, on a choco or zoned, so wipe them from our enmity list
     if (m_PBattleTarget->isDead() ||
         m_PBattleTarget->animation == ANIMATION_CHOCOBO ||
@@ -1784,7 +1804,7 @@ bool CAIMobDummy::TryDeaggro()
 	bool tryDetectDeaggro = false;
 	bool tryTimeDeaggro = true;
 
-	if(m_PMob->m_Behaviour & BEHAVIOUR_SCENT)
+	if(m_PMob->m_Aggro & AGGRO_SCENT)
 	{
 		// if mob is in water it will instant aggro if target cannot be detected
 		if(m_PPathFind->InWater() || m_PBattleTarget->StatusEffectContainer->HasStatusEffect(EFFECT_DEODORIZE))
@@ -1800,6 +1820,12 @@ bool CAIMobDummy::TryDeaggro()
 	{
 		tryDetectDeaggro = true;
 	}
+
+    //Hide allows you to lose aggro on certain types of enemies.
+    //Generally works on monsters that don't track by scent, regardless of detection method.
+    //Can work on monsters that track by scent if the proper conditions are met (double rain weather, crossing over water, etc.) 
+    if(tryTimeDeaggro && m_PBattleTarget->StatusEffectContainer->HasStatusEffect(EFFECT_HIDE))
+        return true;
 
 	// I will now deaggro if I cannot detect my target
 	if(tryDetectDeaggro && !m_PMob->CanDetectTarget(m_PBattleTarget))
@@ -2193,7 +2219,7 @@ void CAIMobDummy::WeatherChange(WEATHER weather, uint8 element)
 {
 
 	// can't detect by scent in this weather
-	if(m_PMob->m_Behaviour & BEHAVIOUR_SCENT)
+	if (m_PMob->m_Aggro & AGGRO_SCENT)
 	{
 		m_PMob->m_disableScent = (weather == WEATHER_RAIN || weather == WEATHER_SQUALL || weather == WEATHER_BLIZZARDS);
 	}
@@ -2327,4 +2353,13 @@ bool CAIMobDummy::getMobSkillAttack()
 bool CAIMobDummy::isActionQueueAttack()
 {
     return m_actionqueueability;
+}
+
+void CAIMobDummy::OnTick()
+{
+	// launch OnMobFight every sec
+	if (battleutils::IsEngauged(m_PMob) && (m_Tick - m_StartBattle) % 1000 < 500)
+	{
+		luautils::OnMobFight(m_PMob, m_PBattleTarget);
+	}
 }

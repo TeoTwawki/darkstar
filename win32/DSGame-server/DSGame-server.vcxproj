@@ -241,8 +241,10 @@
     <ClInclude Include="..\..\src\map\entities\petentity.h" />
     <ClInclude Include="..\..\src\map\fishingutils.h" />
     <ClInclude Include="..\..\src\map\grades.h" />
+    <ClInclude Include="..\..\src\map\battlefield.h" />
+    <ClInclude Include="..\..\src\map\battlefield_handler.h" />
     <ClInclude Include="..\..\src\map\instance.h" />
-    <ClInclude Include="..\..\src\map\instance_handler.h" />
+    <ClInclude Include="..\..\src\map\instance_loader.h" />
     <ClInclude Include="..\..\src\map\items\item.h" />
     <ClInclude Include="..\..\src\map\items\item_armor.h" />
     <ClInclude Include="..\..\src\map\items\item_currency.h" />
@@ -262,6 +264,7 @@
     <ClInclude Include="..\..\src\map\lua\luautils.h" />
     <ClInclude Include="..\..\src\map\lua\lua_ability.h" />
     <ClInclude Include="..\..\src\map\lua\lua_baseentity.h" />
+    <ClInclude Include="..\..\src\map\lua\lua_battlefield.h" />
     <ClInclude Include="..\..\src\map\lua\lua_instance.h" />
     <ClInclude Include="..\..\src\map\lua\lua_mobskill.h" />
     <ClInclude Include="..\..\src\map\lua\lua_region.h" />
@@ -316,13 +319,14 @@
     <ClInclude Include="..\..\src\map\packets\event.h" />
     <ClInclude Include="..\..\src\map\packets\event_string.h" />
     <ClInclude Include="..\..\src\map\packets\event_update.h" />
-    <ClInclude Include="..\..\src\map\packets\fade_out.h" />
+    <ClInclude Include="..\..\src\map\packets\entity_animation.h" />
     <ClInclude Include="..\..\src\map\packets\fishing.h" />
     <ClInclude Include="..\..\src\map\packets\guild_menu.h" />
     <ClInclude Include="..\..\src\map\packets\guild_menu_buy.h" />
     <ClInclude Include="..\..\src\map\packets\guild_menu_sell.h" />
     <ClInclude Include="..\..\src\map\packets\guild_menu_buy_update.h" />
     <ClInclude Include="..\..\src\map\packets\guild_menu_sell_update.h" />
+    <ClInclude Include="..\..\src\map\packets\instance_entry.h" />
     <ClInclude Include="..\..\src\map\packets\inventory_assign.h" />
     <ClInclude Include="..\..\src\map\packets\inventory_finish.h" />
     <ClInclude Include="..\..\src\map\packets\inventory_item.h" />
@@ -343,6 +347,7 @@
     <ClInclude Include="..\..\src\map\packets\message_standard.h" />
     <ClInclude Include="..\..\src\map\packets\message_system.h" />
     <ClInclude Include="..\..\src\map\packets\message_text.h" />
+    <ClInclude Include="..\..\src\map\packets\synth_result.h" />
     <ClInclude Include="..\..\src\map\packets\synth_suggestion.h" />
     <ClInclude Include="..\..\src\map\packets\send_box.h" />
     <ClInclude Include="..\..\src\map\packets\trade_action.h" />
@@ -396,6 +401,7 @@
     <ClInclude Include="..\..\src\map\utils\charutils.h" />
     <ClInclude Include="..\..\src\map\utils\fishingutils.h" />
     <ClInclude Include="..\..\src\map\utils\guildutils.h" />
+    <ClInclude Include="..\..\src\map\utils\battlefieldutils.h" />
     <ClInclude Include="..\..\src\map\utils\instanceutils.h" />
     <ClInclude Include="..\..\src\map\utils\itemutils.h" />
     <ClInclude Include="..\..\src\map\utils\jailutils.h" />
@@ -409,6 +415,8 @@
     <ClInclude Include="..\..\src\map\zone.h" />
     <ClInclude Include="..\..\src\map\attack.h" />
     <ClInclude Include="..\..\src\map\attackround.h" />
+    <ClInclude Include="..\..\src\map\zone_entities.h" />
+    <ClInclude Include="..\..\src\map\zone_instance.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -464,8 +472,10 @@
     <ClCompile Include="..\..\src\map\entities\npcentity.cpp" />
     <ClCompile Include="..\..\src\map\entities\petentity.cpp" />
     <ClCompile Include="..\..\src\map\grades.cpp" />
+    <ClCompile Include="..\..\src\map\battlefield.cpp" />
+    <ClCompile Include="..\..\src\map\battlefield_handler.cpp" />
     <ClCompile Include="..\..\src\map\instance.cpp" />
-    <ClCompile Include="..\..\src\map\instance_handler.cpp" />
+    <ClCompile Include="..\..\src\map\instance_loader.cpp" />
     <ClCompile Include="..\..\src\map\items\item.cpp" />
     <ClCompile Include="..\..\src\map\items\item_armor.cpp" />
     <ClCompile Include="..\..\src\map\items\item_currency.cpp" />
@@ -484,6 +494,7 @@
     <ClCompile Include="..\..\src\map\lua\luautils.cpp" />
     <ClCompile Include="..\..\src\map\lua\lua_ability.cpp" />
     <ClCompile Include="..\..\src\map\lua\lua_baseentity.cpp" />
+    <ClCompile Include="..\..\src\map\lua\lua_battlefield.cpp" />
     <ClCompile Include="..\..\src\map\lua\lua_instance.cpp" />
     <ClCompile Include="..\..\src\map\lua\lua_mobskill.cpp" />
     <ClCompile Include="..\..\src\map\lua\lua_region.cpp" />
@@ -536,13 +547,14 @@
     <ClCompile Include="..\..\src\map\packets\event.cpp" />
     <ClCompile Include="..\..\src\map\packets\event_string.cpp" />
     <ClCompile Include="..\..\src\map\packets\event_update.cpp" />
-    <ClCompile Include="..\..\src\map\packets\fade_out.cpp" />
+    <ClCompile Include="..\..\src\map\packets\entity_animation.cpp" />
     <ClCompile Include="..\..\src\map\packets\fishing.cpp" />
     <ClCompile Include="..\..\src\map\packets\guild_menu.cpp" />
     <ClCompile Include="..\..\src\map\packets\guild_menu_buy.cpp" />
     <ClCompile Include="..\..\src\map\packets\guild_menu_sell.cpp" />
     <ClCompile Include="..\..\src\map\packets\guild_menu_buy_update.cpp" />
     <ClCompile Include="..\..\src\map\packets\guild_menu_sell_update.cpp" />
+    <ClCompile Include="..\..\src\map\packets\instance_entry.cpp" />
     <ClCompile Include="..\..\src\map\packets\inventory_assign.cpp" />
     <ClCompile Include="..\..\src\map\packets\inventory_finish.cpp" />
     <ClCompile Include="..\..\src\map\packets\inventory_item.cpp" />
@@ -564,6 +576,7 @@
     <ClCompile Include="..\..\src\map\packets\message_system.cpp" />
     <ClCompile Include="..\..\src\map\packets\message_text.cpp" />
     <ClCompile Include="..\..\src\map\packets\send_box.cpp" />
+    <ClCompile Include="..\..\src\map\packets\synth_result.cpp" />
     <ClCompile Include="..\..\src\map\packets\synth_suggestion.cpp" />
     <ClCompile Include="..\..\src\map\packets\trade_action.cpp" />
     <ClCompile Include="..\..\src\map\packets\trade_item.cpp" />
@@ -616,6 +629,7 @@
     <ClCompile Include="..\..\src\map\utils\charutils.cpp" />
     <ClCompile Include="..\..\src\map\utils\fishingutils.cpp" />
     <ClCompile Include="..\..\src\map\utils\guildutils.cpp" />
+    <ClCompile Include="..\..\src\map\utils\battlefieldutils.cpp" />
     <ClCompile Include="..\..\src\map\utils\instanceutils.cpp" />
     <ClCompile Include="..\..\src\map\utils\itemutils.cpp" />
     <ClCompile Include="..\..\src\map\utils\jailutils.cpp" />
@@ -629,6 +643,8 @@
     <ClCompile Include="..\..\src\map\zone.cpp" />
     <ClCompile Include="..\..\src\map\attack.cpp" />
     <ClCompile Include="..\..\src\map\attackround.cpp" />
+    <ClCompile Include="..\..\src\map\zone_entities.cpp" />
+    <ClCompile Include="..\..\src\map\zone_instance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\documentation\message.log" />

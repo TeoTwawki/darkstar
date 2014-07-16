@@ -215,6 +215,9 @@ bool CStatusEffectContainer::CanGainStatusEffect(EFFECT statusEffect, uint16 pow
         case EFFECT_ELEGY:
             if(m_POwner->hasImmunity(IMMUNITY_ELEGY)) return false;
         break;
+        case EFFECT_REQUIEM:
+            if(m_POwner->hasImmunity(IMMUNITY_REQUIEM)) return false;
+        break;
     }
 
     // make sure pets can't be charmed
@@ -1232,7 +1235,7 @@ void CStatusEffectContainer::CheckRegen(uint32 tick)
         int8 regen = m_POwner->getMod(MOD_REGEN);
         int8 poison = m_POwner->getMod(MOD_REGEN_DOWN);
         int8 refresh = m_POwner->getMod(MOD_REFRESH) - m_POwner->getMod(MOD_REFRESH_DOWN);
-        float regain = (float)m_POwner->getMod(MOD_REGAIN)/10.0f - m_POwner->getMod(MOD_REGAIN_DOWN);
+        int16 regain = m_POwner->getMod(MOD_REGAIN) - m_POwner->getMod(MOD_REGAIN_DOWN);
 
 		m_POwner->addHP(regen);
 
@@ -1263,7 +1266,7 @@ void CStatusEffectContainer::CheckRegen(uint32 tick)
                     {
 
                         CPetEntity* PPet = (CPetEntity*)m_POwner->PPet;
-    					CItem* hands = PChar->getStorage(LOC_INVENTORY)->GetItem(PChar->equip[SLOT_HANDS]);
+    					CItem* hands = PChar->getEquip(SLOT_HANDS);
 
                         // carbuncle mitts only work on carbuncle
     					if (hands && hands->getID() == 14062 && PPet->name == "Carbuncle"){
@@ -1296,7 +1299,7 @@ void CStatusEffectContainer::CheckRegen(uint32 tick)
 
         if(PChar != NULL && IsAsleep())
         {
-            CItem* neck = PChar->getStorage(LOC_INVENTORY)->GetItem(PChar->equip[SLOT_NECK]);
+            CItem* neck = PChar->getEquip(SLOT_NECK);
 
             // opo-opo necklace
             if(neck != NULL && neck->getID() == 13143)

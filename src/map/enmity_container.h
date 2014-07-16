@@ -32,6 +32,7 @@ struct EnmityObject_t
 	CBattleEntity* PEnmityOwner;	// Enmity Target
 	int16 CE;						// Cumulative Enmity
 	int16 VE;						// Volatile Enmity
+	uint8 maxTH;                    // Maximum Treasure Hunter level of this Enmity Owner
 };
 
 typedef std::map<uint32,EnmityObject_t*> EnmityList_t;
@@ -57,10 +58,11 @@ public:
 	void	UpdateEnmityFromAttack(CBattleEntity* PEntity,uint16 Damage);
   void  AddLinkEnmity(CBattleEntity* PEntity);
 	void	AddPartyEnmity(CCharEntity* PChar);
-	bool    HasTargetID(uint32 TargetID); //true if ID is in the container
+	bool    HasTargetID(uint32 TargetID); //true if ID is in the container with non-zero enmity level
 	void    LowerEnmityByPercent(CBattleEntity* PEntity, uint8 percent, CBattleEntity* HateReceiver); // lower % of hate or transfer it
 	void	DecayEnmity();
   bool  IsWithinEnmityRange(CBattleEntity* PEntity);
+    uint8   GetHighestTH();
   EnmityList_t* GetEnmityList();
 
 private:

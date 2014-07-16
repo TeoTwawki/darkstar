@@ -131,6 +131,9 @@ enum MODIFIER
 	MOD_MPHEAL                    =0x47,// MP Recovered while healing (modId = 71)
 	MOD_HPHEAL                    =0x48,// HP Recovered while healing (modId = 72)
 	MOD_STORETP                   =0x49,// Increases the rate at which TP is gained (modId = 73)
+	MOD_TACTICAL_PARRY            =0x1E6, // Tactical Parry Tp Bonus (modId = 486)
+	MOD_MAG_BURST_BONUS           =0x1E7, // Magic Burst Bonus Modifier (percent) (modId = 487)	
+	MOD_INHIBIT_TP                =0x1E8, // Inhibits TP Gain (percent) (modId = 488)
 
 	// Working Skills (weapon combat skills)
 
@@ -295,6 +298,7 @@ enum MODIFIER
 	// White Mage
 	MOD_AFFLATUS_SOLACE           =0x125,// Pool of HP accumulated during Afflatus Solace (modId = 293)
 	MOD_AFFLATUS_MISERY           =0x126,// Pool of HP accumulated during Afflatus Misery (modId = 294)
+	MOD_AUSPICE_EFFECT	          =0x1E4,// Bonus to Auspice Subtle Blow Effect.
 
 	// Black Mage
 	MOD_CLEAR_MIND                =0x127,// Used in conjunction with MOD_HEALMP to increase amount between tics (modId = 295)
@@ -313,6 +317,7 @@ enum MODIFIER
 	// Paladin
 	MOD_ABSORB_DMG_TO_MP		  =0x1AA,//	Absorbs a percentage of damage taken to MP. (modId = 426)
 	MOD_ENMITY_REDUCTION_PHYSICAL =0x1AB,// TODO: Reduces Enmity decrease when taking physical damage (modId = 427)
+    MOD_SHIELD_MASTERY_TP         =0x1E5,// Shield mastery TP bonus when blocking with a shield (modId = 485)
 
 	// Dark Knight
 
@@ -381,8 +386,6 @@ enum MODIFIER
 	MOD_BLUE_POINTS               =0x135,// Tracks extra blue points (modId = 309)
 
 	// Corsair
-	MOD_DEDICATION                =0x136,// % exp gain (modId = 310)
-	MOD_DEDICATION_CAP            =0x137,// Cap of dedicaiton effect (modId = 311)
 	MOD_EXP_BONUS                 =0x17E,// (modId = 382)
 
 	MOD_PET_MABB                  =0x138,// Tracks totals (modId = 312)
@@ -414,7 +417,16 @@ enum MODIFIER
     MOD_AUTO_MAGIC_SKILL          =0x19E,// (modId = 414)
 	
 	// Dancer
-	MOD_FINISHING_MOVES           =0x14D,// Tracks # of finishing moves (modId = 333)
+	MOD_FINISHING_MOVES           =0x14D,// Tracks # of finishing moves (modId = 333)    
+    MOD_SAMBA_DURATION            =0x1EA,// Samba duration bonus(modId = 490)
+    MOD_WALTZ_POTENTCY            = 0x1EB,// Waltz Potentcy Bonus(modId = 491)
+    MOD_CHOCO_JIG_DURATION        = 0x1EC,// Jig duration bonus (modId = 492)
+    MOD_VFLOURISH_MACC            = 0x1ED,// Violent Flourish accuracy bonus (modId = 493)
+    MOD_STEP_FINISH               = 0x1EE,// Bonus finishing moves from steps (modId = 494)
+    MOD_STEP_ACCURACY             = 0x193,// Bonus accuracy for Dancer's steps (modId = 403)
+    MOD_SPECTRAL_JIG              = 0x1EF,// Spectral Jig duration modifier (percent increase) (modId = 495)
+    MOD_WALTZ_RECAST              = 0x1F1,// (modID = 497) Waltz recast modifier (percent)
+    MOD_SAMBA_PDURATION           = 0x1F2,// (modID = 498) Samba percent duration bonus
 
     //Scholar
     MOD_BLACK_MAGIC_COST          =0x189,// MP cost for black magic (light/dark arts) (modId = 393)
@@ -434,12 +446,14 @@ enum MODIFIER
 	MOD_HELIX_DURATION            =0x1DD,// (modId = 477)
 	MOD_STORMSURGE_EFFECT         =0x190,// (modId = 400)
 	MOD_SUBLIMATION_BONUS         =0x191,// (modId = 401)
+    MOD_GRIMOIRE_SPELLCASTING     =0x1E9,// (modID = 489) "Grimoire: Reduces spellcasting time" bonus
 
 	MOD_ENSPELL                   =0x155,//stores the type of enspell active (0 if nothing) (modId = 341)
 	MOD_SPIKES                    =0x156,//store the type of spike spell active (0 if nothing) (modId = 342)
 	MOD_ENSPELL_DMG               =0x157,//stores the base damage of the enspell before reductions (modId = 343)
     MOD_ENSPELL_DMG_BONUS         =0x1B0,// (modId = 432)
 	MOD_SPIKES_DMG                =0x158,//stores the base damage of the spikes before reductions (modId = 344)
+    MOD_SPIKES_CHANCE             =0x1F3,//chance of spike proc (modId = 499)
 
 	MOD_TP_BONUS                  =0x159,// (modId = 345)
 
@@ -482,7 +496,6 @@ enum MODIFIER
 	MOD_WEAPON_BASH               =0x188,// (modId = 392)
 
 	MOD_WYVERN_BREATH             =0x192,// (modId = 402)
-	MOD_STEP_ACCURACY             =0x193,// Bonus accuracy for Dancer's steps (modId = 403)
 
 
 	/// Gear set modifiers
@@ -528,19 +541,18 @@ enum MODIFIER
     MOD_MAGIC_ABSORB              =0x1DB,// (modId = 475)
     MOD_MAGIC_NULL                =0x1DC,// (modId = 476)
 
-	// MOD_SPARE	=0x1E4,// (modId = 484)
-	// MOD_SPARE	=0x1E5,// (modId = 485)
-	// MOD_SPARE	=0x1E6,// (modId = 486)
-	// MOD_SPARE	=0x1E7,// (modId = 487)
 
-    MOD_ADDITIONAL_EFFECT         =0x1AF,// (modId = 431)
 
-	MOD_MAG_BURST_BONUS           =0x198,// (modId = 408)
-	MOD_EAT_RAW_FISH			  =0x199, // not implemented (modId = 409)
-	MOD_EAT_RAW_MEAT			  =0x19A, // not implemented (modId = 410)
+    //MOD_SPARE =0x1F4,// (modId = 500)
+    //MOD_SPARE =0x1F5,// (modId = 501)
+
+    MOD_ADDITIONAL_EFFECT = 0x1AF,// (modId = 431)
+
+    MOD_GOV_CLEARS        = 0x1F0, // 4% bonus per Grounds of Valor Page clear (modId = 496)
+
 };
 
-#define MAX_MODIFIER	       484
+#define MAX_MODIFIER 500
 
 
 

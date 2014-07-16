@@ -52,8 +52,6 @@ namespace charutils
 	uint32	GetExpNEXTLevel(uint8 charlvl);
 	uint32	GetRealExp(uint8 charlvl, uint8 moblvl);
 
-	uint8   GetHighestTreasureHunter(CCharEntity* PChar, CMobEntity* PMob);
-
 	void	DelExperiencePoints(CCharEntity* PChar, float retainpct);
 	void	DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob);
 	void	DistributeGil(CCharEntity* PChar, CMobEntity* PMob);
@@ -163,6 +161,8 @@ namespace charutils
 
     void    RemoveAllEquipMods(CCharEntity* PChar);
     void    ApplyAllEquipMods(CCharEntity* PChar);
+
+	void	ClearTempItems(CCharEntity* PChar);
 };
 
 #endif

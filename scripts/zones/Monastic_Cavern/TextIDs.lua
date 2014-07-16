@@ -18,10 +18,10 @@ CHEST_ILLUSION = 7262; -- The chest was but an illusion...
 
 -- Other dialog
      NOTHING_OUT_OF_ORDINARY = 6393; -- There is nothing out of the ordinary here.
-					   ALTAR = 7235; -- This appears to be an altar.
+                       ALTAR = 7235; -- This appears to be an altar.
 THE_MAGICITE_GLOWS_OMINOUSLY = 7238; -- The magicite glows ominously.
 
 ORCISH_OVERLORD_ENGAGE = 7268; -- Intruders? Get outs here! We gots us some adventurers!
  ORCISH_OVERLORD_DEATH = 7269; -- Gahahahaha... You fell for our trick. I'm not the big boss. He don't need to be troubled by runty little rarabs like you.
-       ORC_KING_ENGAGE = 7270; -- Ungh? Who are you? So, you've come to kill big boss Bakgodek? I'll crush your scrawny bones myself!
+       ORC_KING_ENGAGE = 7270; -- Ungh? Who are you?So, you've come to kill big boss Bakgodek? I'll crush your scrawny bones myself!
         ORC_KING_DEATH = 7271; -- Unghh... Foolish children of Altana. Defeating me won't change anything. There will be others from the north...

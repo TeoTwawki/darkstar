@@ -142,6 +142,12 @@ CZoneInPacket::CZoneInPacket(CCharEntity * PChar, int16 csid)
 	WBUFW(data,(0x52)-4) = PChar->look.sub    + 0x7000;
 	WBUFW(data,(0x54)-4) = PChar->look.ranged + 0x8000;
 
+	if (PChar->m_Monstrosity != 0)
+	{
+		WBUFW(data, (0x44) - 4) = PChar->m_Monstrosity;
+		WBUFW(data, (0x54) - 4) = 0xFFFF;
+	}
+
 	WBUFB(data,(0x56)-4) = PChar->loc.zone->GetBackgroundMusic();
 	WBUFB(data,(0x58)-4) = PChar->loc.zone->GetBackgroundMusic();
 	WBUFB(data,(0x5A)-4) = PChar->loc.zone->GetSoloBattleMusic();
@@ -186,10 +192,9 @@ CZoneInPacket::CZoneInPacket(CCharEntity * PChar, int16 csid)
     WBUFL(data,(0x38)-4) = pktTime + VTIME_BASEDATE;
     WBUFL(data,(0x3C)-4) = pktTime;
 
-	// current death timestamp is less than an hour ago and the player is dead.
     // 60min starts at 0x03A020 (66 min) and ventures down to 0x5460 (6 min)
-    if (((pktTime + VTIME_BASEDATE) - PChar->m_DeathTimestamp) < 3600 && PChar->isDead()) 
-        WBUFL(data,(0xA4)-4) = 0x03A020 - (60*((pktTime + VTIME_BASEDATE) - PChar->m_DeathTimestamp));
+    if (PChar->m_DeathCounter < 3600 && PChar->isDead())
+        WBUFL(data,(0xA4)-4) = 0x03A020 - (60 * PChar->m_DeathCounter);
 
 	memcpy(data+(0xCC)-4, &PChar->stats, 14);
 
