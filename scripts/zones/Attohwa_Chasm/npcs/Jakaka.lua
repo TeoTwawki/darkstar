@@ -5,9 +5,6 @@
 --  @pos -144.711 6.246 -250.309 7
 -----------------------------------
 package.loaded["scripts/zones/Attohwa_Chasm/TextIDs"] = nil;
-package.loaded["scripts/globals/keyitems"] = nil;
-package.loaded["scripts/globals/common"] = nil;
-package.loaded["scripts/globals/status"] = nil;
 -----------------------------------
 require("scripts/zones/Attohwa_Chasm/TextIDs");
 require("scripts/globals/keyitems");

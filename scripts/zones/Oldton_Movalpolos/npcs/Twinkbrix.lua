@@ -5,9 +5,6 @@
 --  @pos -292.779 6.999 -263.153 11
 -----------------------------------
 package.loaded["scripts/zones/Oldton_Movalpolos/TextIDs"] = nil;
-package.loaded["scripts/globals/keyitems"] = nil;
-package.loaded["scripts/globals/common"] = nil;
-package.loaded["scripts/globals/status"] = nil;
 -----------------------------------
 require("scripts/zones/Oldton_Movalpolos/TextIDs");
 require("scripts/globals/keyitems");

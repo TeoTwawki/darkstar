@@ -5,9 +5,6 @@
 --  @pos -305 2 19 5
 -----------------------------------
 package.loaded["scripts/zones/Uleguerand_Range/TextIDs"] = nil;
-package.loaded["scripts/globals/keyitems"] = nil;
-package.loaded["scripts/globals/common"] = nil;
-package.loaded["scripts/globals/status"] = nil;
 -----------------------------------
 require("scripts/zones/Uleguerand_Range/TextIDs");
 require("scripts/globals/keyitems");

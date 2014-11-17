@@ -6,9 +6,6 @@
 --  @pos -74.308 -24.782 -28.475 26
 -----------------------------------
 package.loaded["scripts/zones/Tavnazian_Safehold/TextIDs"] = nil;
-package.loaded["scripts/globals/keyitems"] = nil;
-package.loaded["scripts/globals/status"] = nil;
-package.loaded["scripts/globals/common"] = nil;
 -----------------------------------
 require("scripts/zones/Tavnazian_Safehold/TextIDs");
 require("scripts/globals/keyitems");

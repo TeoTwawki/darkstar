@@ -6,10 +6,6 @@
 --  @pos 116.294 -6 -98.164 241
 -----------------------------------
 package.loaded["scripts/zones/Windurst_Woods/TextIDs"] = nil;
-package.loaded["scripts/globals/settings"] = nil;
-package.loaded["scripts/globals/quests"] = nil;
-package.loaded["scripts/globals/common"] = nil;
-package.loaded["scripts/globals/status"] = nil;
 -----------------------------------
 require("scripts/zones/Windurst_Woods/TextIDs");
 require("scripts/globals/settings");

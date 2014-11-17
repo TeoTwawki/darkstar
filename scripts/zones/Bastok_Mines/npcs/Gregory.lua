@@ -6,10 +6,6 @@
 -- @pos 51.530 -1 -83.940 234
 -----------------------------------
 package.loaded["scripts/zones/Bastok_Mines/TextIDs"] = nil;
-package.loaded["scripts/globals/settings"] = nil;
-package.loaded["scripts/globals/quests"] = nil;
-package.loaded["scripts/globals/common"] = nil;
-package.loaded["scripts/globals/status"] = nil;
 -----------------------------------
 require("scripts/zones/Bastok_Mines/TextIDs");
 require("scripts/globals/settings");

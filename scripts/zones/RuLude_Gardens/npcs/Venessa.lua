@@ -4,12 +4,6 @@
 --	Standard Info NPC
 -----------------------------------
 package.loaded["scripts/zones/RuLude_Gardens/TextIDs"] = nil;
-package.loaded["scripts/globals/settings"] = nil;
-package.loaded["scripts/globals/common"] = nil;
-package.loaded["scripts/globals/keyitems"] = nil;
-package.loaded["scripts/globals/missions"] = nil;
-package.loaded["scripts/globals/quests"] = nil;
-package.loaded["scripts/globals/status"] = nil;
 -----------------------------------
 require("scripts/zones/RuLude_Gardens/TextIDs");
 require("scripts/globals/settings");

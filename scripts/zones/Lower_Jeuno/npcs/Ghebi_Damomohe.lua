@@ -7,12 +7,6 @@
 -- @pos 16 0 -5
 -----------------------------------
 package.loaded["scripts/zones/Lower_Jeuno/TextIDs"] = nil;
-package.loaded["scripts/globals/missions"] = nil;
-package.loaded["scripts/globals/settings"] = nil;
-package.loaded["scripts/globals/keyitems"] = nil;
-package.loaded["scripts/globals/titles"] = nil;
-package.loaded["scripts/globals/quests"] = nil;
-package.loaded["scripts/globals/shop"] = nil;
 -----------------------------------
 require("scripts/zones/Lower_Jeuno/TextIDs");
 require("scripts/globals/missions");
