@@ -43,9 +43,7 @@ function onTrigger(player,npc)
             if(member ~= nil and member:getHP() > 0) then
                 member:addExp(EXP);
             end
-            i = i + 1;
         end
-        partyId = partyId + 1;
     end
     
 
