@@ -5,7 +5,8 @@
 -----------------------------------
 
 package.loaded["scripts/zones/Northern_San_dOria/TextIDs"] = nil;
-require("scripts/globals/server");
+require("scripts/globals/events/harvest_festivals");
+require("scripts/globals/zone");
 require("scripts/globals/settings");
 require("scripts/globals/titles");
 require("scripts/globals/quests");
@@ -15,8 +16,13 @@ require("scripts/globals/missions");
 -- onInitialize
 -----------------------------------
 
-function onInitialize(zone)			
-	zone:registerRegion(1, -7,-3,110, 7,-1,155);		
+function onInitialize(zone)
+
+    SetExplorerMoogles(17723644);
+
+	zone:registerRegion(1, -7,-3,110, 7,-1,155);
+    
+    applyHalloweenNpcCostumes(zone:getID())    
 end;			
 
 -----------------------------------			
@@ -47,6 +53,10 @@ function onZoneIn(player,prevZone)
 	elseif(player:getCurrentMission(COP) == THE_ROAD_FORKS and player:getVar("EMERALD_WATERS_Status") == 1)then --EMERALD_WATERS-- COP 3-3A: San d'Oria Route
 		player:setVar("EMERALD_WATERS_Status",2);
 		cs = 0x000E;
+elseif(player:getCurrentMission(SANDORIA) == THE_HEIR_TO_THE_LIGHT and player:getVar("SANDO92") == 0)then
+cs = 0x0001;
+elseif(player:getCurrentMission(SANDORIA) == THE_HEIR_TO_THE_LIGHT and player:getVar("SANDO92") == 4)then
+cs = 0x0000;
 	elseif(player:hasCompletedMission(SANDORIA,COMING_OF_AGE) and tonumber(os.date("%j")) == player:getVar("Wait1DayM8-1_date")) then
 		cs = 0x0010;
 	end		
@@ -109,6 +119,10 @@ function onEventFinish(player,csid,option)
 	--printf("RESULT: %u",option);	
 	if(csid == 0x0217) then	
 		player:messageSpecial(ITEM_OBTAINED,0x218);
+	elseif(csid == 0x0001)then
+	player:setVar("SANDO92",1);
+	elseif(csid == 0x0000)then
+	player:setVar("SANDO92",5);
 	elseif(csid == 0x7534 and option == 0) then	
 		player:setHomePoint();
 		player:messageSpecial(HOMEPOINT_SET);

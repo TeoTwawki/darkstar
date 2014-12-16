@@ -36,7 +36,7 @@
 
 CUContainer::CUContainer()
 {
-       m_ContainerType = UCONTAINER_EMPTY;
+    m_ContainerType = UCONTAINER_EMPTY;
 	Clean();
 }
 
@@ -120,6 +120,17 @@ void CUContainer::SetType(UCONTAINERTYPE Type)
 void CUContainer::SetLock()
 {
     m_lock = true;
+}
+
+/************************************************************************
+*                                                                       *
+*  Unlock container														*
+*                                                                       *
+************************************************************************/
+
+void CUContainer::UnLock()
+{
+	m_lock = false;
 }
 
 /************************************************************************

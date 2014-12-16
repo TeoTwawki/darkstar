@@ -67,12 +67,12 @@
 *	lists used in battleutils											*
 ************************************************************************/
 
-uint16 g_SkillTable[100][13];									// All Skills by level/skilltype
+uint16 g_SkillTable[100][14];									// All Skills by level/skilltype
 uint8  g_SkillRanks[MAX_SKILLTYPE][MAX_JOBTYPE];				// Holds skill ranks by skilltype and job
 uint16 g_SkillChainDamageModifiers[MAX_SKILLCHAIN_LEVEL + 1][MAX_SKILLCHAIN_COUNT + 1]; // Holds damage modifiers for skill chains [chain level][chain count]
 
 CWeaponSkill* g_PWeaponSkillList[MAX_WEAPONSKILL_ID];			// Holds all Weapon skills
-CMobSkill*    g_PMobSkillList[MAX_MOBSKILL_ID];					// List of mob skills
+std::map<uint16, CMobSkill*> g_PMobSkillList;					// List of mob skills
 
 std::list<CWeaponSkill*> g_PWeaponSkillsList[MAX_SKILLTYPE];	// Holds Weapon skills by type
 std::vector<CMobSkill*>  g_PMobFamilySkills[MAX_MOB_FAMILY];	// Mob Skills By Family
@@ -182,16 +182,26 @@ void LoadWeaponSkillsList()
 
 void LoadMobSkillsList()
 {
-	memset(g_PMobSkillList, 0, sizeof(g_PMobSkillList));
-
 	const int8* fmtQuery = "SELECT mob_skill_id, family_id, mob_anim_id, mob_skill_name, \
-						   mob_skill_aoe, mob_skill_distance, mob_anim_time, mob_prepare_time, \
-						   mob_valid_targets, mob_skill_flag, mob_skill_param, knockback \
-						   FROM mob_skill \
-						   WHERE mob_skill_id < %u \
-						   ORDER BY family_Id, mob_skill_id ASC";
+        mob_skill_aoe, mob_skill_distance, mob_anim_time, mob_prepare_time, \
+        mob_valid_targets, mob_skill_flag, mob_skill_param, knockback \
+        FROM mob_skill \
+        INNER JOIN mob_family_system ON family_id = familyid \
+        INNER JOIN mob_pools ON mob_pools.familyid = mob_family_system.familyid \
+        INNER JOIN mob_groups ON mob_groups.poolid = mob_pools.poolid \
+        INNER JOIN zone_settings ON mob_groups.zoneid = zone_settings.zoneid \
+        WHERE IF(%d <> 0, '%s' = zoneip AND %d = zoneport, TRUE) OR family_id = 0 \
+        UNION \
+        (SELECT  mob_skill_id, family_id, mob_anim_id, mob_skill_name, \
+        mob_skill_aoe, mob_skill_distance, mob_anim_time, mob_prepare_time, \
+        mob_valid_targets, mob_skill_flag, mob_skill_param, knockback \
+        FROM mob_skill \
+        INNER JOIN mob_family_system ON family_id = familyid \
+        INNER JOIN mob_pools ON mob_pools.familyid = mob_family_system.familyid \
+        WHERE family_id IN(SELECT familyid FROM pet_list JOIN mob_pools USING(poolid))) \
+        ORDER BY family_Id, mob_skill_id ASC;";
 
-	int32 ret = Sql_Query(SqlHandle, fmtQuery, MAX_MOBSKILL_ID);
+	int32 ret = Sql_Query(SqlHandle, fmtQuery, map_ip, inet_ntoa(map_ip), map_port);
 
 	if( ret != SQL_ERROR && Sql_NumRows(SqlHandle) != 0)
 	{
@@ -216,8 +226,10 @@ void LoadMobSkillsList()
 			{
 				ShowError("battleutils::LoadMobSkillsList Defined skill (%d) is out of range of (%d)\n", PMobSkill->getfamilyID(), MAX_MOB_FAMILY);
 			}
-
-            g_PMobFamilySkills[PMobSkill->getfamilyID()].push_back(PMobSkill);
+            else
+            {
+                g_PMobFamilySkills[PMobSkill->getfamilyID()].push_back(PMobSkill);
+            }
 		}
 	}
 }
@@ -263,9 +275,9 @@ void FreeWeaponSkillsList()
 ************************************************************************/
 void FreeMobSkillList()
 {
-	for(int32 SkillID= 0; SkillID < MAX_MOBSKILL_ID; ++SkillID)
+	for(auto mobskill : g_PMobSkillList)
 	{
-		delete g_PMobSkillList[SkillID];
+        delete mobskill.second;
 	}
 }
 
@@ -365,9 +377,14 @@ std::list<CWeaponSkill*> GetWeaponSkills(uint8 skill)
 
 CMobSkill* GetMobSkill(uint16 SkillID)
 {
-    DSP_DEBUG_BREAK_IF(SkillID >= MAX_MOBSKILL_ID);
-
-    return g_PMobSkillList[SkillID];
+    try
+    {
+        return g_PMobSkillList[SkillID];
+    }
+    catch (std::out_of_range e)
+    {
+        return NULL;
+    }
 }
 
 /************************************************************************

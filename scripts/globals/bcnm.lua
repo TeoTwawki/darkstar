@@ -71,7 +71,7 @@ bcnmid_param_map = {6,{640,0},
 					201,{416,0,417,1,418,2,420,4},
 					202,{448,0,449,1,450,2,452,4},
 					203,{480,0,481,1,482,2,484,4},
-					206,{512,0,517,5,518,6,519,7,532,20},
+					206,{512,0,516,4,517,5,518,6,519,7,532,20},
 					207,{544,0,545,1,547,3},
 					209,{576,0,577,1,578,2,580,4},
 					211,{608,0,609,1,611,3}};
@@ -128,7 +128,7 @@ function EventTriggerBCNM(player,npc)
 		else --You're not in the BCNM but you have the Battlefield effect. Think: non-trader in a party
 			status = player:getStatusEffect(EFFECT_BATTLEFIELD);
 			playerbcnmid = status:getPower();
-			playermask = GetBattleBitmask(playerbcnmid,player:getZone(),1);
+			playermask = GetBattleBitmask(playerbcnmid,player:getZone():getID(),1);
 			if(playermask~=-1) then
 				--This gives players who did not trade to go in the option of entering the fight
 				player:startEvent(0x7d00,0,0,0,playermask,0,0,0,0);
@@ -192,18 +192,18 @@ function EventUpdateBCNM(player,csid,option,entrance)
 
 		if(instance == player:getVar("bcnm_instanceid"))then
 			--respond to this packet
-			local mask = GetBattleBitmask(id,player:getZone(),2);
+			local mask = GetBattleBitmask(id,player:getZone():getID(),2);
 			local status = player:getStatusEffect(EFFECT_BATTLEFIELD);
 			local playerbcnmid = status:getPower();
 			if(mask < playerbcnmid) then
-				mask = GetBattleBitmask(playerbcnmid,player:getZone(),2);
+				mask = GetBattleBitmask(playerbcnmid,player:getZone():getID(),2);
 				player:updateEvent(2,mask,0,1,1,skip); -- Add mask number for the correct entering CS
 				player:bcnmEnter(id);
 				player:setVar("bcnm_instanceid_tick",0);
 				-- print("mask is "..mask)
 				-- print("playerbcnmid is "..playerbcnmid);
 			
-				mask = GetBattleBitmask(id,player:getZone(),2);
+				mask = GetBattleBitmask(id,player:getZone():getID(),2);
 			elseif(mask >= playerbcnmid) then
 				player:updateEvent(2,mask,0,1,1,skip); -- Add mask number for the correct entering CS
 				player:bcnmEnter(id);
@@ -386,7 +386,7 @@ end;
 function checkNonTradeBCNM(player,npc)
 
 	local mask = 0;
-	local Zone = player:getZone();
+	local Zone = player:getZone():getID();
 	
 	if(Zone == 6) then -- Bearclaw_Pinnacle
 	   	if(player:getCurrentMission(COP) == THREE_PATHS  and  player:getVar("COP_Ulmia_s_Path") == 6) then --flames_for_the_dead
@@ -572,6 +572,10 @@ function checkNonTradeBCNM(player,npc)
 		if(player:getCurrentMission(player:getNation()) == 14 and player:getVar("MissionStatus") == 11) then -- Mission 5-1
 			mask = GetBattleBitmask(512,Zone,1); 
 			player:setVar("trade_bcnmid",512);
+		elseif(player:getCurrentMission(SANDORIA) == THE_HEIR_TO_THE_LIGHT and player:getVar("SANDO92") == 3)then -- bastok 9-2 
+			mask = GetBattleBitmask(516,Zone,1);
+			player:setVar("trade_bcnmid",516);
+
 		-- Temp disabled pending BCNM mob fixes
 		-- elseif(player:getCurrentMission(ACP) >= THOSE_WHO_LURK_IN_SHADOWS_III and player:hasKeyItem(MARK_OF_SEED)) then -- ACP Mission 7
 			-- mask = GetBattleBitmask(532,Zone,1);
@@ -618,7 +622,7 @@ end;
 function CutsceneSkip(player,npc)
 
 	local skip = 0;
-	local Zone = player:getZone();
+	local Zone = player:getZone():getID();
 	
 	if(Zone == 6) then -- Bearclaw Pinnacle
 	   	if((player:hasCompletedMission(COP,THREE_PATHS)) or (player:getCurrentMission(COP) == THREE_PATHS and player:getVar("COP_Ulmia_s_Path") > 6)) then -- flames_for_the_dead
@@ -739,6 +743,8 @@ function CutsceneSkip(player,npc)
 		end
 	elseif(Zone == 206) then -- Qu'Bia Arena
 		if((player:hasCompletedMission(player:getNation(),14)) or (player:getCurrentMission(player:getNation()) == 14 and player:getVar("MissionStatus") > 11)) then -- Mission 5-1
+			skip = 1;
+		elseif((player:hasCompletedMission(player:getNation(),23)) or (player:getCurrentMission(player:getNation()) == 23 and player:getVar("SANDO92") > 4)) then -- Mission 9-2
 			skip = 1;
 		end
 	elseif(Zone == 207) then -- Cloister of Flames
