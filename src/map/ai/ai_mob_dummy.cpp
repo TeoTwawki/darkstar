@@ -2014,8 +2014,11 @@ void CAIMobDummy::TryLink()
 
                 if (PPartyMember->m_roamFlags & ROAMFLAG_IGNORE)
                 {
-                    // force into attack action
-                    PPartyMember->PBattleAI->SetCurrentAction(ACTION_ENGAGE);
+                    if (PPartyMember->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PPartyMember->loc.p.x, PPartyMember->loc.p.y, PPartyMember->loc.p.z)))
+                    {
+                        // force into attack action
+                        PPartyMember->PBattleAI->SetCurrentAction(ACTION_ENGAGE);
+                    }
                 }
             }
         }
