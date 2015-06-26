@@ -37,7 +37,7 @@
 
 #include "packets/weather.h"
 #include "navmesh.h"
-
+#include "AABB/AABB.h"
 
 enum ZONEID : uint16
 {
@@ -338,6 +338,7 @@ enum ZONEID : uint16
 };
 
 #define MAX_ZONEID 294
+#define MAX_BOUNDINGBOXES 255
 
 enum REGIONTYPE : uint8
 {
@@ -506,6 +507,11 @@ int32 zone_update_weather(uint32 tick, CTaskMgr::CTask *PTask);
 class CZone
 {
 public:
+    uint16          CZone::LoadBoundingBoxes();
+    bool            CZone::CheckForWalls(Vector3 point1, Vector3 point2);
+    Bounding_Box*   bounding_boxes[MAX_BOUNDINGBOXES];
+    uint16          m_TotalBoundingBoxes = 0;
+    bool            useAABB;              // Use customized Axis-Aligned Bounding Box to block aggro through walls
 
     ZONEID          GetID();
     ZONETYPE        GetType();
@@ -579,6 +585,8 @@ public:
     CNavMesh*       m_navMesh;              // zones navmesh for finding paths
 
 private:
+    bool            CZone::CheckLineIntersection(float start, float dir, float min, float max, float& enter, float& exit);
+    bool            CZone::CollisionDetection(const Vector3& s, const Vector3& e, const Vector3& min, const Vector3& max);
 
     ZONEID          m_zoneID;               // ID зоны
     ZONETYPE        m_zoneType;

@@ -9883,12 +9883,228 @@ inline int32 CLuaBaseEntity::getILvlMacc(lua_State *L)
     return 1;
 }
 
+/*  WALL DETECTION METHODS  */
+inline int32 CLuaBaseEntity::mapWall(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    uint16 wall_number = (uint16)lua_tointeger(L, 1);
+    float x1 = (float)lua_tonumber(L, 2);
+    float y1 = (float)lua_tonumber(L, 3);
+    float z1 = (float)lua_tonumber(L, 4);
+    float x2 = (float)lua_tonumber(L, 5);
+    float y2 = (float)lua_tonumber(L, 6);
+    float z2 = (float)lua_tonumber(L, 7);
+
+
+    uint32 res = Sql_Query(SqlHandle, "SELECT count(*) FROM bounding_boxes WHERE wall_number=%u AND zoneid=%u LIMIT 1", wall_number, m_PBaseEntity->getZone());
+    if (res != SQL_ERROR && Sql_NumRows(SqlHandle) != 0 && Sql_NextRow(SqlHandle) == SQL_SUCCESS)
+    {
+        if (Sql_GetIntData(SqlHandle, 0) > 0)
+        {
+            lua_pushinteger(L, -1);  // wall number already exists
+            return 1;
+        }
+    }
+
+    const int8* query = "INSERT INTO bounding_boxes (wall_number,x1,y1,z1,x2,y2,z2,zoneid) \
+                         VALUES (%u,%f,%f,%f,%f,%f,%f,%u)";
+    res = Sql_Query(SqlHandle, query, wall_number, x1, y1, z1, x2, y2, z2, m_PBaseEntity->getZone());
+    if (res == SQL_ERROR)
+    {
+        lua_pushinteger(L, -2); // sql error
+        return 1;
+    }
+    lua_pushinteger(L, 1);
+
+    return 1;
+}
+
+inline int32 CLuaBaseEntity::updateWall(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    uint16 wall_number = (uint16)lua_tointeger(L, 1);
+    float x1 = (float)lua_tonumber(L, 2);
+    float y1 = (float)lua_tonumber(L, 3);
+    float z1 = (float)lua_tonumber(L, 4);
+    float x2 = (float)lua_tonumber(L, 5);
+    float y2 = (float)lua_tonumber(L, 6);
+    float z2 = (float)lua_tonumber(L, 7);
+
+    uint32 res = Sql_Query(SqlHandle, "SELECT count(*) FROM bounding_boxes WHERE wall_number=%u AND zoneid=%u LIMIT 1", wall_number, m_PBaseEntity->getZone());
+    if (res != SQL_ERROR && Sql_NumRows(SqlHandle) != 0 && Sql_NextRow(SqlHandle) == SQL_SUCCESS)
+    {
+        if (Sql_GetIntData(SqlHandle, 0) == 0)
+        {
+            lua_pushinteger(L, -3);  // wall number doesn't exist
+            return 1;
+        }
+    }
+
+    const int8* query = "UPDATE bounding_boxes SET x1=%f,y1=%f,z1=%f,x2=%f,y2=%f,z2=%f WHERE wall_number=%u AND zoneid=%u LIMIT 1";
+    res = Sql_Query(SqlHandle, query, x1, y1, z1, x2, y2, z2, wall_number, m_PBaseEntity->getZone());
+    if (res == SQL_ERROR)
+    {
+        lua_pushinteger(L, -2); // sql error
+        return 1;
+    }
+    lua_pushinteger(L, 1);
+
+   return 1;
+}
+
+inline int32 CLuaBaseEntity::disableWall(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    uint16 wall_number = (uint16)lua_tointeger(L, 1);
+    uint8 disabled = (uint16)lua_tointeger(L, 2);
+
+    uint32 res = Sql_Query(SqlHandle, "SELECT count(*) FROM bounding_boxes WHERE wall_number=%u AND zoneid=%u LIMIT 1", wall_number, m_PBaseEntity->getZone());
+    if (res != SQL_ERROR && Sql_NumRows(SqlHandle) != 0 && Sql_NextRow(SqlHandle) == SQL_SUCCESS)
+    {
+        if (Sql_GetIntData(SqlHandle, 0) == 0)
+        {
+            lua_pushinteger(L, -3);  // wall number doesn't exist
+            return 1;
+        }
+    }
+
+    const int8* query = "UPDATE bounding_boxes SET disabled=%u WHERE wall_number=%u AND zoneid=%u LIMIT 1";
+    res = Sql_Query(SqlHandle, query, disabled, wall_number, m_PBaseEntity->getZone());
+    if (res == SQL_ERROR)
+    {
+        lua_pushinteger(L, -2); // sql error
+        return 1;
+    }
+    lua_pushinteger(L, 1);
+
+    return 1;
+}
+
+
+inline int32 CLuaBaseEntity::reloadWalls(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    CCharEntity* PChar = (CCharEntity*)m_PBaseEntity;
+    uint16 total_loaded = PChar->loc.zone->LoadBoundingBoxes();
+    lua_pushinteger(L, total_loaded);
+
+    return 1;
+}
+
+
+inline int32 CLuaBaseEntity::gotoWall(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    CCharEntity* PChar = (CCharEntity*)m_PBaseEntity;
+
+    uint16 wall_number = (uint16)lua_tointeger(L, 1);
+    uint16 wall_corner = (uint16)lua_tointeger(L, 2);
+    if (wall_number > 255)
+    {
+        lua_pushstring(L, "-2"); // invalid wall number
+        return 1;
+    }
+
+    std::string wall_pos = ("");
+    uint32 res = Sql_Query(SqlHandle, "SELECT x1,y1,z1,x2,y2,z2 FROM bounding_boxes WHERE wall_number=%u AND zoneid=%u LIMIT 1", wall_number, m_PBaseEntity->getZone());
+    if (res == SQL_SUCCESS && Sql_NextRow(SqlHandle) == SQL_SUCCESS)
+    {
+        if (wall_corner == 2)
+        {
+            wall_pos += "1 " + std::to_string(Sql_GetFloatData(SqlHandle, 3)) + " " + std::to_string(Sql_GetFloatData(SqlHandle, 4)) + " " + std::to_string(Sql_GetFloatData(SqlHandle, 5));
+        }
+        else
+        {
+            wall_pos += "1 " + std::to_string(Sql_GetFloatData(SqlHandle, 0)) + " " + std::to_string(Sql_GetFloatData(SqlHandle, 1)) + " " + std::to_string(Sql_GetFloatData(SqlHandle, 2));
+        }
+        lua_pushstring(L, wall_pos.c_str());
+    }
+    else
+    {
+        lua_pushstring(L, "-3"); // sql error
+    }
+
+    return 1;
+}
+
+// To be able to store alphanumerical/float values
+inline int32 CLuaBaseEntity::setVarEx(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    DSP_DEBUG_BREAK_IF(lua_isnil(L, -1));
+    DSP_DEBUG_BREAK_IF(lua_isnil(L, -2));
+    DSP_DEBUG_BREAK_IF(lua_isnil(L, -3));
+
+    const int8* charname = lua_tostring(L, -3);
+    const int8* varname = lua_tostring(L, -2);
+    const int8* value = lua_tostring(L, -1);
+    std::string v = value;
+
+    Sql_Query(SqlHandle, "DELETE FROM char_vars_ex WHERE charname = '%s' AND varname = '%s'", charname, varname);
+    if (v.length() > 0)
+    {
+        const int8* fmtQuery = "INSERT INTO char_vars_ex SET charname = '%s', varname = '%s', value = '%s' ON DUPLICATE KEY UPDATE value = '%s';";
+        Sql_Query(SqlHandle, fmtQuery, charname, varname, value, value);
+    }
+
+    lua_pushnil(L);
+
+    return 1;
+}
+
+inline int32 CLuaBaseEntity::getVarEx(lua_State *L)
+{
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity == NULL);
+    DSP_DEBUG_BREAK_IF(m_PBaseEntity->objtype != TYPE_PC);
+
+    DSP_DEBUG_BREAK_IF(lua_isnil(L, -1));
+    DSP_DEBUG_BREAK_IF(lua_isnil(L, -2));
+
+
+    const int8* charname = lua_tostring(L, 1);
+    const int8* varname = lua_tostring(L, 2);
+
+    const int8* fmtQuery = "SELECT value FROM char_vars_ex WHERE charname = '%s' AND varname = '%s' LIMIT 1;";
+    int32 ret = Sql_Query(SqlHandle, fmtQuery, charname, varname);
+
+    if (ret != SQL_ERROR && Sql_NumRows(SqlHandle) != 0 && Sql_NextRow(SqlHandle) == SQL_SUCCESS)
+    {
+        int8 *value = Sql_GetData(SqlHandle, 0);
+        lua_pushstring(L, value);
+        return 1;
+    }
+
+    lua_pushnil(L);
+
+    return 1;
+}
+
+
 //==========================================================//
 
 const int8 CLuaBaseEntity::className[] = "CBaseEntity";
 
 Lunar<CLuaBaseEntity>::Register_t CLuaBaseEntity::methods[] =
 {
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, mapWall),
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, updateWall),
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, disableWall),
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, reloadWalls),
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, gotoWall),
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, setVarEx),
+    LUNAR_DECLARE_METHOD(CLuaBaseEntity, getVarEx),
     LUNAR_DECLARE_METHOD(CLuaBaseEntity,ChangeMusic),
     LUNAR_DECLARE_METHOD(CLuaBaseEntity,warp),
     LUNAR_DECLARE_METHOD(CLuaBaseEntity,leavegame),

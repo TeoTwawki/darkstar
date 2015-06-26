@@ -67,7 +67,7 @@
 #include "utils/mobutils.h"
 #include "utils/petutils.h"
 #include "utils/zoneutils.h"
-
+#include "AABB/vector3.h"
 
 /************************************************************************
 *                                                                       *
@@ -157,6 +157,10 @@ CZone::CZone(ZONEID ZoneID, REGIONTYPE RegionID, CONTINENTTYPE ContinentID)
 CZone::~CZone()
 {
     delete m_zoneEntities;
+    for (int bb = 0; bb < m_TotalBoundingBoxes; bb++)
+    {
+         delete bounding_boxes[bb];
+    }
 }
 
 /************************************************************************
@@ -345,7 +349,8 @@ void CZone::LoadZoneSettings()
           "zone.misc,"
           "zone.navmesh,"
           "zone.zonetype,"
-          "bcnm.name "
+          "bcnm.name,"
+          "zone.aabb "
         "FROM zone_settings AS zone "
         "LEFT JOIN bcnm_info AS bcnm "
         "USING (zoneid) "
@@ -374,6 +379,10 @@ void CZone::LoadZoneSettings()
         {
             m_BattlefieldHandler = new CBattlefieldHandler(m_zoneID);
         }
+        useAABB = (bool)Sql_GetIntData(SqlHandle, 12);
+        if (useAABB)
+            LoadBoundingBoxes();
+
         if (m_miscMask & MISC_TREASURE)
         {
             m_TreasurePool = new CTreasurePool(TREASUREPOOL_ZONE);
@@ -1019,6 +1028,102 @@ void CZone::CheckRegions(CCharEntity* PChar)
         }
     }
     PChar->m_InsideRegionID = RegionID;
+}
+
+uint16 CZone::LoadBoundingBoxes()
+{
+
+	if (Sql_Query(SqlHandle, "SELECT x1,y1,z1,x2,y2,z2,\
+                                 wall_number FROM bounding_boxes WHERE zoneid=%u AND disabled=0", m_zoneID) != SQL_ERROR && Sql_NumRows(SqlHandle) != 0)
+	{
+
+		// Clean up any existing boxes on reloading during runtime
+		for (int bb = 0; bb < m_TotalBoundingBoxes; bb++)
+		{
+			delete bounding_boxes[bb];
+		}
+
+		m_TotalBoundingBoxes = 0;
+		while (Sql_NextRow(SqlHandle) == SQL_SUCCESS && m_TotalBoundingBoxes < MAX_BOUNDINGBOXES)
+		{
+			Bounding_Box* box = new Bounding_Box();
+
+			box->corners[0] = Vector3((float)Sql_GetFloatData(SqlHandle, 0), (float)Sql_GetFloatData(SqlHandle, 1), (float)Sql_GetFloatData(SqlHandle, 2));
+			box->corners[1] = Vector3((float)Sql_GetFloatData(SqlHandle, 3), (float)Sql_GetFloatData(SqlHandle, 4), (float)Sql_GetFloatData(SqlHandle, 5));
+			box->wall_number = (uint8)Sql_GetUIntData(SqlHandle, 6); // for debugging purposes only
+
+			Vector3 minv = Vector3(dsp_min(box->corners[0].x(), box->corners[1].x()), dsp_min(box->corners[0].y(), box->corners[1].y()), dsp_min(box->corners[0].z(), box->corners[1].z()));
+			Vector3 maxv = Vector3(dsp_max(box->corners[0].x(), box->corners[1].x()), dsp_max(box->corners[0].y(), box->corners[1].y()), dsp_max(box->corners[0].z(), box->corners[1].z()));
+			box->corners[0] = minv;
+			box->corners[1] = maxv;
+
+			bounding_boxes[m_TotalBoundingBoxes] = box;
+			m_TotalBoundingBoxes++;
+		}
+
+		ShowDebug("Total bounding boxes for zone %u: %u\n", m_zoneID, m_TotalBoundingBoxes);
+	}
+
+	return m_TotalBoundingBoxes;
+}
+
+
+bool CZone::CheckForWalls(Vector3 point1, Vector3 point2)
+{
+	if (m_TotalBoundingBoxes == 0)
+		return true;
+
+	for (int bb = 0; bb < m_TotalBoundingBoxes; bb++)
+	{
+		if (CollisionDetection(point1, point2, bounding_boxes[bb]->corners[0], bounding_boxes[bb]->corners[1]))
+		{
+			//ShowDebug(CL_YELLOW" ** WALL %u BLOCKED AGGRO\n", bounding_boxes[bb]->wall_number);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+bool CZone::CollisionDetection(const Vector3& s, const Vector3& e, const Vector3& min, const Vector3& max)
+{
+	float       enter = 0.0f;
+	float       exit = 1.0f;
+	Vector3     dir = e - s;
+
+	if (!CheckLineIntersection(s.x(), dir.x(), min.x(), max.x(), enter, exit))
+		return false;
+	if (!CheckLineIntersection(s.y(), dir.y(), min.y(), max.y(), enter, exit))
+		return false;
+	if (!CheckLineIntersection(s.z(), dir.z(), min.z(), max.z(), enter, exit))
+		return false;
+
+	return true;
+}
+
+
+bool CZone::CheckLineIntersection(float start, float dir, float min, float max, float& enter, float& exit)
+{
+	if (fabs(dir) < 1.0E-8)
+		return (start >= min && start <= max);
+
+	float ooDir = 1.0f / dir;
+	float t0 = (min - start) * ooDir;
+	float t1 = (max - start) * ooDir;
+
+	if (t0 > t1)
+		std::swap(t0, t1);
+
+	if (t0 > exit || t1 < enter)
+		return false;
+
+	if (t0 > enter)
+		enter = t0;
+	if (t1 < exit)
+		exit = t1;
+
+	return true;
 }
 
 //====================================1=======================
