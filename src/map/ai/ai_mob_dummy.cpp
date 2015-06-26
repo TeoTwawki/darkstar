@@ -2080,18 +2080,40 @@ bool CAIMobDummy::CanDetectTarget(CBattleEntity* PTarget, bool forceSight)
 
     if (detectSight && !PTarget->StatusEffectContainer->HasStatusEffectByFlag(EFFECTFLAG_INVISIBLE) && currentDistance < m_PMob->getMobMod(MOBMOD_SIGHT_RANGE) && isFaceing(m_PMob->loc.p, PTarget->loc.p, 40))
     {
-      return CanSeePoint(PTarget->loc.p);
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
     }
 
 	if ((aggro & AGGRO_DETECT_TRUESIGHT) && currentDistance < m_PMob->getMobMod(MOBMOD_SIGHT_RANGE) && isFaceing(m_PMob->loc.p, PTarget->loc.p, 40))
     {
-      return CanSeePoint(PTarget->loc.p);
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
+
     }
 
 	if ((aggro & AGGRO_DETECT_TRUEHEARING) && currentDistance < m_PMob->getMobMod(MOBMOD_SOUND_RANGE))
     {
-      return CanSeePoint(PTarget->loc.p);
-    }
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
+	}
 
 	if ((m_PMob->m_Behaviour & BEHAVIOUR_AGGRO_AMBUSH) && currentDistance < 3 && !PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_SNEAK))
     {
@@ -2100,8 +2122,15 @@ bool CAIMobDummy::CanDetectTarget(CBattleEntity* PTarget, bool forceSight)
 
 	if ((aggro & AGGRO_DETECT_HEARING) && currentDistance < m_PMob->getMobMod(MOBMOD_SOUND_RANGE) && !PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_SNEAK))
     {
-      return CanSeePoint(PTarget->loc.p);
-    }
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
+	}
 
     // everything below require distance to be below 20
     if(currentDistance > 20)
@@ -2111,22 +2140,50 @@ bool CAIMobDummy::CanDetectTarget(CBattleEntity* PTarget, bool forceSight)
 
 	if ((aggro & AGGRO_DETECT_LOWHP) && PTarget->GetHPP() < 75)
     {
-        return CanSeePoint(PTarget->loc.p);
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
     }
 
 	if ((aggro & AGGRO_DETECT_MAGIC) && PTarget->PBattleAI->GetCurrentAction() == ACTION_MAGIC_CASTING && PTarget->PBattleAI->GetCurrentSpell()->hasMPCost())
     {
-        return CanSeePoint(PTarget->loc.p);
-    }
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
+	}
 
 	if ((aggro & AGGRO_DETECT_WEAPONSKILL) && PTarget->PBattleAI->GetCurrentAction() == ACTION_WEAPONSKILL_FINISH)
     {
-        return CanSeePoint(PTarget->loc.p);
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
     }
 
 	if ((aggro & AGGRO_DETECT_JOBABILITY) && PTarget->PBattleAI->GetCurrentAction() == ACTION_JOBABILITY_FINISH)
     {
-        return CanSeePoint(PTarget->loc.p);
+        if (PTarget->loc.zone->useAABB)
+        {
+            return (PTarget->loc.zone->CheckForWalls(Vector3(m_PMob->loc.p.x, m_PMob->loc.p.y, m_PMob->loc.p.z), Vector3(PTarget->loc.p.x, PTarget->loc.p.y, PTarget->loc.p.z)));
+        }
+        else
+        {
+            return CanSeePoint(PTarget->loc.p);
+        }
     }
 
     return false;

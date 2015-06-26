@@ -81,6 +81,9 @@
     <Filter Include="Header Files\common\marshal">
       <UniqueIdentifier>{e12005cb-3c26-42a1-9752-8898f7492816}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\aabb">
+      <UniqueIdentifier>{6c6aab62-6888-4cb8-909e-cb49aae3bc1f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\map\ability.h">
@@ -832,6 +835,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\marshal\string.h">
       <Filter>Header Files\common\marshal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\map\aabb\AABB.h">
+      <Filter>Header Files\aabb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\map\aabb\vector3.h">
+      <Filter>Header Files\aabb</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

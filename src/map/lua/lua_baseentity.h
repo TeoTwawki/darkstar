@@ -77,6 +77,14 @@ public:
         return m_PBaseEntity;
     }
 
+    int32 mapWall(lua_State* L);
+    int32 updateWall(lua_State* L);
+    int32 disableWall(lua_State* L);
+    int32 reloadWalls(lua_State* L);
+    int32 gotoWall(lua_State* L);
+    int32 getVarEx(lua_State* L);
+    int32 setVarEx(lua_State* L);
+
     int32 ChangeMusic(lua_State* L);        // Sets the specified music Track for specified music block.
 
     int32 warp(lua_State*);                 // Returns Character to home point
