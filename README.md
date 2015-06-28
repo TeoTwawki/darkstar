@@ -1,4 +1,4 @@
-Darkstar Project - Static client version 30150508_8
+Darkstar Project -  modified
 ========
 
-This is a forked version from https://github.com/DarkstarProject/darkstar
+This variant an experiment using code from Vivitaru's fork located here https://github.com/Vivitarut/darkstar_30150508_8
