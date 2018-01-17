@@ -578,18 +578,16 @@ void CZoneEntities::SpawnPCs(CCharEntity* PChar)
     }
 }
 
-void CZoneEntities::SpawnMoogle(CCharEntity* PChar)
+void CZoneEntities::SpawnMogHouseEntity(CCharEntity* PChar)
 {
     for (EntityList_t::const_iterator it = m_npcList.begin(); it != m_npcList.end(); ++it)
     {
-        CNpcEntity* PCurrentNpc = (CNpcEntity*)it->second;
-
-        if (PCurrentNpc->loc.p.z == 1.5 &&
-            PCurrentNpc->look.face == 0x52)
+        CNpcEntity* PMog = (CNpcEntity*)it->second;)
+        if (stricmp(PMog->GetName(), "Mog_House_Moogle") == 0)
         {
-            PCurrentNpc->status = STATUS_NORMAL;
-            PChar->pushPacket(new CEntityUpdatePacket(PCurrentNpc, ENTITY_SPAWN, UPDATE_ALL_MOB));
-            PCurrentNpc->status = STATUS_DISAPPEAR;
+            PMog->status = STATUS_NORMAL;
+            PChar->pushPacket(new CEntityUpdatePacket(PMog, ENTITY_SPAWN, UPDATE_ALL_MOB));
+            PMog->status = STATUS_DISAPPEAR;
             return;
         }
     }

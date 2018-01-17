@@ -248,13 +248,12 @@ CCharEntity* GetChar(uint32 charid)
     return nullptr;
 }
 
-
 CCharEntity* GetCharToUpdate(uint32 primary, uint32 ternary)
 {
     CCharEntity* PPrimary = nullptr;
     CCharEntity* PSecondary = nullptr;
     CCharEntity* PTernary = nullptr;
-    
+
     for (auto PZone : g_PZoneList)
     {
         PZone.second->ForEachChar([primary, ternary, &PPrimary, &PSecondary, &PTernary](CCharEntity* PChar)
@@ -274,9 +273,10 @@ CCharEntity* GetCharToUpdate(uint32 primary, uint32 ternary)
     }
     if (PSecondary)
         return PSecondary;
-            
+
     return PTernary;
 }
+
 /************************************************************************
 *                                                                       *
 *  Загружаем список NPC в указанную зону                                *

@@ -40,7 +40,7 @@ public:
     void			SpawnMOBs(CCharEntity* PChar);									// отображаем MOBs в зоне
     void			SpawnPETs(CCharEntity* PChar);									// отображаем PETs в зоне
     void			SpawnNPCs(CCharEntity* PChar);									// отображаем NPCs в зоне
-    void			SpawnMoogle(CCharEntity* PChar);								// отображаем Moogle в MogHouse
+    void            SpawnMogHouseEntity(CCharEntity* PChar);                        // Display "Mog House only" entities
     void			SpawnTransport(CCharEntity* PChar);                             // отображаем транспорт
     void			DespawnPC(CCharEntity* PChar);
     void			SavePlayTime();
