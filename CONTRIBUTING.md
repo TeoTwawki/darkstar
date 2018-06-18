@@ -116,3 +116,13 @@ Clang-Format is also an option for C++
   ```
   insert into table_name
   ```
+
+* If you redump a table, please use a tool that lets you control the output, or the command line with options like this:
+  ```
+  mysqldump.exe --skip-triggers --skip-extended-insert --order-by-primary --hex-blob tableName > "C:\path\to\output\tableName.sql"
+  ```
+
+  That will get you human readable output. He want hex blobs, sort by primary keys, and we don't put triggers into the table file nor jam the entire table on one line (thats what extended inserts are).
+  
+  Note: Where possible we'd like to preserve existing in file comments. We understand sometimes that isn't possible.
+  
